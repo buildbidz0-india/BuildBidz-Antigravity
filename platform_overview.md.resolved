@@ -1,0 +1,34 @@
+# BuildBidz Platform Report
+
+## Overview
+**BuildBidz** is an end-to-end construction management platform specifically designed for the Indian market. It aims to digitize and streamline the complex processes involved in large-scale construction projects, from initial bidding to final financials.
+
+## Key Features
+- **Bidding & Procurement**: Tools for managing the tender process and sourcing materials.
+- **Project Management**: Drawings, RFIs (Requests for Information), and field management.
+- **Financial Controls**: Comprehensive financial tracking, including embedded finance options.
+- **AI Integration**:
+  - **AI Copilot**: Assistants for project managers and field workers.
+  - **WhatsApp Ingestion**: Automating data entry via WhatsApp messages (the preferred communication tool for many Indian contractors).
+  - **OCR/ASR**: Automated processing of site receipts and voice notes.
+  - **RAG & Vector Search**: Intelligent search across project documentation.
+
+## Technical Architecture
+The platform utilizes a modern, hybrid architecture:
+- **Core API Layer**: Firebase Data Connect (managed GraphQL) for efficient CRUD operations and data security.
+- **Compute Layer**: Python/FastAPI backend for high-performance tasks like AI/ML processing and complex integrations.
+- **Database**: Google Cloud SQL (PostgreSQL with pgvector for AI search support) and Neo4j for relationship-heavy data (knowledge graphs).
+- **Client Applications**:
+  - **Web**: Next.js-based admin dashboard for office and management tasks.
+  - **Mobile**: React Native/Expo app with offline-first capabilities for field workers.
+
+## Integrations
+BuildBidz is designed to play well with existing business tools common in India:
+- **WhatsApp** (for project communication and data ingestion).
+- **Tally & Zoho** (for accounting and financial sync).
+- **UPI & NBFCs** (for payments and credit access).
+
+## Security & Compliance
+- **Row Level Security (RLS)**: Fine-grained data isolation per organization.
+- **Firebase Auth**: Multi-factor authentication and single sign-on.
+- **Audit Logging**: Comprehensive logs for compliance and accountability.
