@@ -1,0 +1,199 @@
+// =============================================================================
+// BuildBidz - Authentication Context & Hooks
+// =============================================================================
+
+"use client";
+
+import {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    ReactNode,
+} from "react";
+import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase/config";
+import {
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut as firebaseSignOut,
+    User,
+    RecaptchaVerifier,
+    signInWithPhoneNumber,
+    ConfirmationResult,
+} from "firebase/auth";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    signIn: (email: string, password: string) => Promise<void>;
+    signUp: (email: string, password: string, metadata?: object) => Promise<void>;
+    signOut: () => Promise<void>;
+    signInWithOtp: (phone: string) => Promise<void>;
+    verifyOtp: (token: string) => Promise<void>;
+}
+
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+// =============================================================================
+// Context
+// =============================================================================
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: AuthProviderProps) {
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+    const router = useRouter();
+
+    useEffect(() => {
+        // Listen for auth changes
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUser(user);
+            setIsLoading(false);
+
+            if (user) {
+                router.refresh();
+            } else {
+                router.push("/login");
+            }
+        });
+
+        return () => unsubscribe();
+    }, [router]);
+
+    // Sign in with email and password
+    const signIn = async (email: string, password: string) => {
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+        } catch (error) {
+            console.error("Sign in error:", error);
+            throw error;
+        }
+    };
+
+    // Sign up with email and password
+    const signUp = async (
+        email: string,
+        password: string,
+        metadata?: object
+    ) => {
+        try {
+            const { user } = await createUserWithEmailAndPassword(auth, email, password);
+            // Metadata handling would go here, e.g., updating profile
+            if (metadata) {
+                // await updateProfile(user, { ... });
+            }
+        } catch (error) {
+            console.error("Sign up error:", error);
+            throw error;
+        }
+    };
+
+    // Sign out
+    const signOut = async () => {
+        try {
+            await firebaseSignOut(auth);
+        } catch (error) {
+            console.error("Sign out error:", error);
+            throw error;
+        }
+    };
+
+    // Sign in with OTP (for phone)
+    const signInWithOtp = async (phone: string) => {
+        try {
+            // Recaptcha verifier needs a container in the DOM
+            // This is a simplified version; in a real app, you'd handle the widget
+            const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                'size': 'invisible'
+            });
+            const result = await signInWithPhoneNumber(auth, phone, recaptchaVerifier);
+            setConfirmationResult(result);
+        } catch (error) {
+            console.error("Phone sign in error:", error);
+            throw error;
+        }
+    };
+
+    // Verify OTP
+    const verifyOtp = async (token: string) => {
+        try {
+            if (!confirmationResult) {
+                throw new Error("No pending confirmation found");
+            }
+            await confirmationResult.confirm(token);
+        } catch (error) {
+            console.error("OTP verification error:", error);
+            throw error;
+        }
+    };
+
+    const value = {
+        user,
+        isLoading,
+        signIn,
+        signUp,
+        signOut,
+        signInWithOtp,
+        verifyOtp,
+    };
+
+    return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+// =============================================================================
+// Hook
+// =============================================================================
+
+export function useAuth() {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error("useAuth must be used within an AuthProvider");
+    }
+    return context;
+}
+
+// =============================================================================
+// Protected Route Component
+// =============================================================================
+
+interface ProtectedRouteProps {
+    children: ReactNode;
+    fallback?: ReactNode;
+}
+
+export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
+    const { user, isLoading } = useAuth();
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isLoading && !user) {
+            router.push("/login");
+        }
+    }, [user, isLoading, router]);
+
+    if (isLoading) {
+        return (
+            fallback || (
+                <div className="flex items-center justify-center min-h-screen">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600" />
+                </div>
+            )
+        );
+    }
+
+    if (!user) {
+        return null;
+    }
+
+    return <>{children}</>;
+}

@@ -1,0 +1,100 @@
+# BuildBidz - India-First Construction Platform
+
+An end-to-end construction platform for the Indian market featuring bidding, procurement, drawings, RFIs, field management, financials, embedded-finance, AI copilot, knowledge graph, offline mobile sync, WhatsApp ingestion, OCR/ASR, RAG, and vector search.
+
+## 🏗️ Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              BUILDBIDZ PLATFORM                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  INGESTION: WhatsApp · Mobile · Web · Email · API                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  API LAYER: Firebase Data Connect (GQL) │ FastAPI (Python)                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  AUTH & STORAGE: Firebase Auth │ Firebase Storage                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  DATA: Cloud SQL (Postgres+pgvector) │ Redis │ Neo4j                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  CLIENTS: Next.js Web │ React Native Mobile (Offline-first)                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  INTEGRATIONS: WhatsApp · Tally · Zoho · UPI · NBFCs                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Docker & Docker Compose
+- Node.js 20+
+- Python 3.11+
+- Firebase CLI (`npm install -g firebase-tools`)
+
+### Local Development
+
+1. **Clone & Setup**:
+   ```bash
+   git clone https://github.com/buildbidz/buildbidz.git
+   cd buildbidz
+   cp .env.example .env
+   ```
+
+2. **Infrastructure**:
+   ```bash
+   # Start local services (Redis, Neo4j)
+   docker-compose up -d
+   ```
+
+3. **Database**:
+   ```bash
+   # Push schema via Firebase Data Connect
+   firebase dataconnect:sql:push
+   ```
+
+4. **Frontends**:
+   ```bash
+   # Web Admin
+   cd frontend/web && npm install && npm run dev
+   
+   # Mobile App
+   cd frontend/mobile && npm install && npx expo start
+   ```
+
+5. **Python Backend**:
+   ```bash
+   cd python_backend
+   pip install -r requirements.txt
+   python -m app.main
+   ```
+
+## 📁 Project Structure
+
+```
+buildbidz/
+├── dataconnect/       # Firebase Data Connect (SQL Schema & GQL)
+├── python_backend/    # FastAPI Backend & ML Workers
+│   ├── app/
+│   │   ├── api/       # API Routes
+│   │   ├── services/  # Domain Logic (Finance, AI, Integrations)
+│   │   └── workers/   # Celery Workers (OCR, ASR, Sync)
+├── frontend/
+│   ├── web/           # Next.js Admin Dashboard
+│   └── mobile/        # React Native Field App
+├── infra/             # Kubernetes & Deployment Configs
+├── docs/              # Detailed Technical Documentation
+└── scripts/           # Maintenance & CLI Scripts
+```
+
+## 📚 Documentation
+
+- [System Architecture](./docs/ARCHITECTURE.md)
+- [Developer Onboarding](./docs/developer/onboarding.md)
+- [Firebase Migration Guide](./docs/MIGRATION.md)
+
+## 🔒 Security
+
+- Row Level Security (RLS) via Data Connect
+- Firebase Auth (MFA, SSO)
+- End-to-end Audit Logging
+- SOC2/ISO 27001 aligned
