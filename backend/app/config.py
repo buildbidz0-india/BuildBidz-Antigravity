@@ -34,20 +34,6 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn = Field(
         default="postgresql://postgres:postgres@localhost:5432/buildbidz"
     )
-    DATABASE_POOL_SIZE: int = 20
-    DATABASE_MAX_OVERFLOW: int = 10
-    DATABASE_ECHO: bool = False
-    
-    # Redis
-    REDIS_URL: RedisDsn = Field(default="redis://localhost:6379/0")
-    REDIS_CACHE_TTL: int = 3600
-    
-    # Neo4j
-    NEO4J_URI: str = "bolt://localhost:7687"
-    NEO4J_USER: str = "neo4j"
-    NEO4J_PASSWORD: str = "password"
-    
-    # Storage
     
     # Firebase
     FIREBASE_PROJECT_ID: str = "buildbidz-d56f2"
@@ -60,25 +46,6 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
     
-    # Azure Vision (OCR)
-    AZURE_VISION_ENDPOINT: Optional[str] = None
-    AZURE_VISION_KEY: Optional[str] = None
-    
-    # Sarvam AI (ASR for Hindi)
-    SARVAM_API_KEY: Optional[str] = None
-    SARVAM_ENDPOINT: str = "https://api.sarvam.ai"
-    
-    # WhatsApp
-    WHATSAPP_VERIFY_TOKEN: str = ""
-    WHATSAPP_ACCESS_TOKEN: str = ""
-    WHATSAPP_PHONE_NUMBER_ID: str = ""
-    WHATSAPP_APP_SECRET: str = ""
-    
-    # Celery
-    CELERY_BROKER_URL: str = "redis://localhost:6379/1"
-    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
-    CELERY_WORKER_CONCURRENCY: int = 4
-    
     # Security
     SECRET_KEY: str = "change-this-in-production"
     JWT_ALGORITHM: str = "HS256"
@@ -90,32 +57,8 @@ class Settings(BaseSettings):
     RATE_LIMIT_WINDOW: int = 60
     
     # Feature Flags
-    FEATURE_WHATSAPP_ENABLED: bool = True
-    FEATURE_EMBEDDED_FINANCE_ENABLED: bool = True
     FEATURE_OFFLINE_SYNC_ENABLED: bool = True
     FEATURE_AI_COPILOT_ENABLED: bool = True
-    
-    # Observability
-    OTEL_EXPORTER_OTLP_ENDPOINT: str = "http://localhost:4317"
-    SENTRY_DSN: Optional[str] = None
-    
-    # Tally Integration
-    TALLY_HOST: str = "localhost"
-    TALLY_PORT: int = 9000
-    
-    # Zoho Integration
-    ZOHO_CLIENT_ID: Optional[str] = None
-    ZOHO_CLIENT_SECRET: Optional[str] = None
-    ZOHO_REDIRECT_URI: str = "http://localhost:8000/api/v1/integrations/zoho/callback"
-    
-    # Razorpay (UPI)
-    RAZORPAY_KEY_ID: Optional[str] = None
-    RAZORPAY_KEY_SECRET: Optional[str] = None
-    
-    # Cashfree (UPI)
-    CASHFREE_APP_ID: Optional[str] = None
-    CASHFREE_SECRET_KEY: Optional[str] = None
-    CASHFREE_ENVIRONMENT: str = "production"
     
     # AI/LLM Settings
     LLM_MODEL: str = "gpt-4o-mini"

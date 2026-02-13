@@ -46,7 +46,9 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("Starting BuildBidz API", version=settings.APP_VERSION)
     from app.firebase import init_firebase
+    from app.cloudinary import init_cloudinary
     init_firebase()
+    init_cloudinary()
     await init_db()
     yield
     # Shutdown

@@ -159,70 +159,70 @@ sync_app = typer.Typer(help="Sync with external systems")
 app.add_typer(sync_app, name="sync")
 
 
-@sync_app.command("tally")
-def sync_tally(
-    org_id: str = typer.Argument(..., help="Organization ID"),
-    days: int = typer.Option(30, "--days", help="Sync invoices from last N days"),
-):
-    """Sync invoices to Tally."""
-    async def sync():
-        from app.services.integrations.tally import tally_service
-        
-        # Check Tally connection
-        connected = await tally_service.check_connection()
-        if not connected:
-            console.print("[red]✗ Cannot connect to Tally. Is it running?[/red]")
-            raise typer.Exit(1)
-        
-        console.print("[green]✓ Connected to Tally[/green]")
-        
-        pool = await get_db_pool()
-        
-        async with pool.acquire() as conn:
-            # Get pending invoices
-            invoices = await conn.fetch("""
-                SELECT i.*, v.name as vendor_name
-                FROM invoices i
-                JOIN vendors v ON v.id = i.vendor_id
-                WHERE i.org_id = $1 
-                AND i.tally_synced = false
-                AND i.invoice_date >= NOW() - INTERVAL '%s days'
-                ORDER BY i.invoice_date
-            """ % days, org_id)
-            
-            console.print(f"Found {len(invoices)} invoices to sync")
-            
-            with Progress() as progress:
-                task = progress.add_task("Syncing...", total=len(invoices))
-                
-                for inv in invoices:
-                    result = await tally_service.sync_invoice_to_tally(dict(inv))
-                    
-                    if result["success"]:
-                        await conn.execute(
-                            "UPDATE invoices SET tally_synced = true WHERE id = $1",
-                            inv["id"]
-                        )
-                        progress.update(task, advance=1)
-                    else:
-                        console.print(f"[yellow]⚠ Failed: {inv['invoice_number']}[/yellow]")
-            
-            console.print("[green]✓ Tally sync complete[/green]")
-    
-    asyncio.run(sync())
+# @sync_app.command("tally")
+# def sync_tally(
+#     org_id: str = typer.Argument(..., help="Organization ID"),
+#     days: int = typer.Option(30, "--days", help="Sync invoices from last N days"),
+# ):
+#     """Sync invoices to Tally."""
+#     async def sync():
+#         from app.services.integrations.tally import tally_service
+#         
+#         # Check Tally connection
+#         connected = await tally_service.check_connection()
+#         if not connected:
+#             console.print("[red]✗ Cannot connect to Tally. Is it running?[/red]")
+#             raise typer.Exit(1)
+#         
+#         console.print("[green]✓ Connected to Tally[/green]")
+#         
+#         pool = await get_db_pool()
+#         
+#         async with pool.acquire() as conn:
+#             # Get pending invoices
+#             invoices = await conn.fetch("""
+#                 SELECT i.*, v.name as vendor_name
+#                 FROM invoices i
+#                 JOIN vendors v ON v.id = i.vendor_id
+#                 WHERE i.org_id = $1 
+#                 AND i.tally_synced = false
+#                 AND i.invoice_date >= NOW() - INTERVAL '%s days'
+#                 ORDER BY i.invoice_date
+#             """ % days, org_id)
+#             
+#             console.print(f"Found {len(invoices)} invoices to sync")
+#             
+#             with Progress() as progress:
+#                 task = progress.add_task("Syncing...", total=len(invoices))
+#                 
+#                 for inv in invoices:
+#                     result = await tally_service.sync_invoice_to_tally(dict(inv))
+#                     
+#                     if result["success"]:
+#                         await conn.execute(
+#                             "UPDATE invoices SET tally_synced = true WHERE id = $1",
+#                             inv["id"]
+#                         )
+#                         progress.update(task, advance=1)
+#                     else:
+#                         console.print(f"[yellow]⚠ Failed: {inv['invoice_number']}[/yellow]")
+#             
+#             console.print("[green]✓ Tally sync complete[/green]")
+#     
+#     asyncio.run(sync())
 
 
-@sync_app.command("neo4j")
-def sync_neo4j(
-    org_id: str = typer.Argument(..., help="Organization ID"),
-    full: bool = typer.Option(False, "--full", help="Full sync instead of incremental"),
-):
-    """Sync knowledge graph to Neo4j."""
-    from app.workers.kg_sync_worker import sync_organization
-    
-    console.print(f"Queuing KG sync for org {org_id}...")
-    sync_organization.delay(org_id, full_sync=full)
-    console.print("[green]✓ Sync task queued[/green]")
+# @sync_app.command("neo4j")
+# def sync_neo4j(
+#     org_id: str = typer.Argument(..., help="Organization ID"),
+#     full: bool = typer.Option(False, "--full", help="Full sync instead of incremental"),
+# ):
+#     """Sync knowledge graph to Neo4j."""
+#     from app.workers.kg_sync_worker import sync_organization
+#     
+#     console.print(f"Queuing KG sync for org {org_id}...")
+#     sync_organization.delay(org_id, full_sync=full)
+#     console.print("[green]✓ Sync task queued[/green]")
 
 
 # =============================================================================
