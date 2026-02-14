@@ -58,6 +58,16 @@ class Settings(BaseSettings):
     GROQ_MODEL_20B: str = "openai/gpt-oss-20b"
     GROQ_MODEL_120B: str = "openai/gpt-oss-120b"
     
+    # Roadmap Multi-Model Configuration (2026)
+    GROQ_MODEL_FORECAST: str = "deepseek-r1-distill-llama-70b"
+    GROQ_MODEL_COORDINATOR: str = "llama-3.3-70b-versatile"
+    GROQ_MODEL_ASR: str = "whisper-large-v3"
+    
+    # Circuit Breaker Configuration (from Reliability Architecture)
+    CIRCUIT_BREAKER_LATENCY_THRESHOLD_MS: int = 5000   # 5s as per roadmap
+    CIRCUIT_BREAKER_FAILURE_THRESHOLD: int = 3
+    CIRCUIT_BREAKER_RECOVERY_TIMEOUT_S: int = 60
+    
     # Pinecone
     PINECONE_API_KEY: str = ""
     PINECONE_ENVIRONMENT: str = "us-east-1"
