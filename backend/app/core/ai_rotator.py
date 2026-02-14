@@ -37,10 +37,20 @@ class APIKeyRotator:
         self.current_index = (self.current_index + 1) % len(self.keys)
         new_key = self.get_key()
 
+        if old_key and isinstance(old_key, str):
+            old_prefix = old_key[0:8]
+        else:
+            old_prefix = "None"
+            
+        if new_key and isinstance(new_key, str):
+            new_prefix = new_key[0:8]
+        else:
+            new_prefix = "None"
+
         logger.info(
             f"Rotating API key for {self.service_name}",
-            old_key_prefix=old_key[:8] if old_key else "None",
-            new_key_prefix=new_key[:8] if new_key else "None",
+            old_key_prefix=old_prefix,
+            new_key_prefix=new_prefix,
             key_index=self.current_index
         )
         return new_key
@@ -48,9 +58,13 @@ class APIKeyRotator:
     def mark_limited(self, key: str):
         """Mark a key as rate-limited."""
         # In a more advanced implementation, we could set a cooldown timer
+        prefix = "None"
+        if key and isinstance(key, str):
+            prefix = key[0:8]
+            
         logger.warning(
             f"API key marked as rate-limited for {self.service_name}",
-            key_prefix=key[:8] if key else "None"
+            key_prefix=prefix
         )
         self.failed_keys.add(key)
         self.rotate()
