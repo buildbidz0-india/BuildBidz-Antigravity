@@ -33,10 +33,17 @@ Ran `git status` after the sync.
 - **Expected:** `nothing to commit, working tree clean`
 - **Actual:** (See terminal output)
 
+### Persistence & Documentation
+- **Runtime Persistence:** Integrated `AgentLog` and `AwardDecision` models into the PostgreSQL database. The backend now automatically logs every AI interaction and award decision.
+- **Meta-Persistence (Archival):** Updated `sync_git.bat` to automatically backup brain planning artifacts (`task.md`, `plan.md`, etc.) to the `docs/agent_history` directory in the codebase before every sync. This ensures future agents have full context.
+
+## Verification Results
+...
+### Persistence Verification
+- **Archival:** Verified that `sync_git.bat` successfully creates timestamped session folders in `docs/agent_history` and copies/pushes artifacts.
+- **DB Logging:** Code integration complete in `ai.py` and `award_engine.py`. 
+    - *Note:* Database table creation script is ready at `backend/scripts/init_db.py`.
+
 ## How to Use
-1.  **One Click:** Simply double-click `sync_git.bat` in your project folder.
-2.  **What it does:**
-    - Adds all changes.
-    - Commits them with a timestamp.
-    - Pulls the latest changes from the remote (using rebase to keep history clean).
-    - Pushes your changes to the remote.
+1.  **Sync & Archive:** Just run `sync_git.bat`. It now handles both GitHub sync AND planning documentation archival.
+2.  **DB Init:** Run `python backend/scripts/init_db.py` once to initialize the new logging tables in your database.
