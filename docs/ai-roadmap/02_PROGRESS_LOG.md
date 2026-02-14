@@ -189,7 +189,34 @@
 | `task.md` | Modified | Marked Phase 5 complete |
 
 ### Where We Stopped
-**Status:** Phase 5 (Extraction Specialist) complete. The system can now extract structured data from unstructured documents. Next step is Phase 6: Field Voice (ASR).
+**Status:** Phase 5 (Extraction Specialist) complete. Started Phase 6.
+
+---
+
+## Session 7 — 2026-02-14 (10:30 AM IST)
+
+### Context
+- Implementation of Phase 6: Field Voice (Whisper Large V3)
+
+### Actions Completed
+1. ✅ **Enhanced ASR Worker** — `backend/app/workers/asr_worker.py` — Updated `GroqASR` to accept a `prompt` parameter for vocabulary tuning.
+2. ✅ **Vocabulary Injection** — Configured the Celery task to inject critical construction terms ("RFI", "OAC", "TMT bars", "Grade 53 Cement") into the Whisper prompt context.
+3. ✅ **Verification** — Created `verify_asr.py` to confirm the worker correctly processes the prompt parameter.
+
+### Key Decisions
+- **Prompt Engineering:** Leveraged Whisper's prompt-based context injection to bias the model towards construction terminology without needing fine-tuning.
+- **Provider strategy:** Maintained the multi-provider fallback (Groq -> Sarvam -> Whisper API -> Local) for maximum reliability.
+
+### Files Created/Modified
+| File | Action | Description |
+|---|---|---|
+| `backend/app/workers/asr_worker.py` | Modified | Added vocabulary prompt support |
+| `verify_asr.py` | Created | Verification script |
+| `task.md` | Modified | Marked Phase 6 complete |
+
+### Where We Stopped
+**Status:** Phase 6 (Field Voice) complete. All scheduled AI engines (Award, Forecast, Coordinator, Extractor, ASR) are now implemented. Next step: Final Deployment & Optimization checks.
+
 
 
 

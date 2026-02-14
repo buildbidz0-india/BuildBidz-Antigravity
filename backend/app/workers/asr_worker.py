@@ -148,7 +148,8 @@ class GroqASR:
         self,
         audio_bytes: bytes,
         language: Optional[str] = None,
-        retry_count: int = 0
+        retry_count: int = 0,
+        **kwargs
     ) -> dict:
         """Transcribe audio using Groq Whisper with rotation."""
         key = self.rotator.get_key()
@@ -164,6 +165,10 @@ class GroqASR:
             if language:
                 lang_map = {"hi-IN": "hi", "en-IN": "en", "ta-IN": "ta", "te-IN": "te"}
                 data["language"] = lang_map.get(language, language[:2])
+
+            # Inject vocabulary via prompt if provided
+            if "prompt" in kwargs:
+                data["prompt"] = kwargs["prompt"]
 
             try:
                 response = await client.post(
@@ -385,7 +390,9 @@ async def _transcribe_audio(
     # Try Groq first (extremely fast)
     try:
         groq = GroqASR()
-        result = await groq.transcribe(audio_bytes, language)
+        # Construction vocabulary context
+        vocab_prompt = "BuildBidz construction terms: RFI, OAC, TMT bars, Grade 53 Cement, Excavation, HVAC, MEP, Punch List, Snag List, BOQ, Tender."
+        result = await groq.transcribe(audio_bytes, language, prompt=vocab_prompt)
     except Exception as groq_error:
         logger.warning("Groq ASR failed, trying Sarvam/Whisper", error=str(groq_error))
 
