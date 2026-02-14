@@ -10,8 +10,8 @@ from app.services.ai import groq_service
 async def test_rag():
     print("Testing RAG Chat...")
     
-    context = "BuildBidz recently won the 'Best Construction Tech 2026' award in Bangalore. The CEO is Rahul Sharma."
-    query = "Who is the CEO of BuildBidz and what award did they win?"
+    context = "BuildBidz recently won the 'Best Construction Tech 2026' award in Bangalore. The admin is BuildBidz Admin."
+    query = "Who is the admin of BuildBidz and what award did they win?"
     
     try:
         response = await groq_service.rag_chat(
@@ -26,7 +26,7 @@ async def test_rag():
         print(f"\nResponse:\n{content}")
         
         # Simple validation
-        if "Rahul Sharma" in content and "Best Construction Tech 2026" in content:
+        if "BuildBidz Admin" in content and "Best Construction Tech 2026" in content:
             print("\nSUCCESS: AI used the provided context.")
         else:
             print("\nFAILURE: AI might not have used the provided context effectively.")

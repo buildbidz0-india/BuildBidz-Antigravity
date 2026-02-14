@@ -14,9 +14,9 @@ def create_admin_user():
         cred = credentials.Certificate(settings.FIREBASE_SERVICE_ACCOUNT_PATH)
         firebase_admin.initialize_app(cred)
 
-    email = "rahul.sharma@sharmaconstructions.com"
+    email = "admin@buildbidz.com"
     password = "Test@123456"
-    display_name = "Rahul Sharma (Admin)"
+    display_name = "BuildBidz Admin"
 
     try:
         # Check if user exists
