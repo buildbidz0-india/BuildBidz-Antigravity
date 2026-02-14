@@ -7,8 +7,12 @@ import {
     Clock,
     AlertCircle,
     FileText,
-    MessageSquare
+    FileText,
+    MessageSquare,
+    Brain
 } from "lucide-react";
+import BidScoringChart from "@/components/dashboard/BidScoringChart";
+import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 
 const stats = [
     { label: "Active Projects", value: "12", icon: Construction, trend: "+2 this month", color: "text-blue-600", bg: "bg-blue-50" },
@@ -58,12 +62,35 @@ export default function DashboardPage() {
                 ))}
             </div>
 
+            {/* AI Insights Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                >
+                    <BidScoringChart />
+                </motion.div>
+                <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
+                >
+                    <PriceTrendChart />
+                </motion.div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Recent Activity */}
                 <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                     <div className="p-6 border-b border-gray-50 flex items-center justify-between">
                         <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
-                        <button className="text-orange-600 text-sm font-medium hover:underline">View all</button>
+                        <div className="flex items-center space-x-2">
+                            <div className="flex items-center text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-semibold">
+                                <Brain size={14} className="mr-1" /> AI Prioritized
+                            </div>
+                            <button className="text-orange-600 text-sm font-medium hover:underline">View all</button>
+                        </div>
                     </div>
                     <div className="divide-y divide-gray-50">
                         {recentActivity.map((activity) => (
@@ -80,15 +107,23 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* Quick Links / Other Info */}
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 text-white shadow-xl shadow-orange-100 relative overflow-hidden">
+                {/* AI Assistant Quick Access */}
+                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 text-white shadow-xl shadow-orange-100 relative overflow-hidden flex flex-col justify-between">
                     <div className="relative z-10">
-                        <h3 className="text-xl font-bold mb-4">BuildBidz Pro</h3>
+                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-4">
+                            <Brain size={24} />
+                        </div>
+                        <h3 className="text-xl font-bold mb-2">AI Copilot</h3>
                         <p className="opacity-90 mb-6 text-sm leading-relaxed">
-                            Unlock advanced analytics, unlimited drawings storage, and premium AI copilot features.
+                            I can help you analyze bids, forecast material trends, or draft contractor notifications.
                         </p>
-                        <button className="bg-white text-orange-600 px-6 py-2 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-md">
-                            Upgrade Now
+                    </div>
+                    <div className="relative z-10 space-y-3">
+                        <button className="w-full bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-md text-sm">
+                            Ask Copilot
+                        </button>
+                        <button className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm">
+                            Analyze Market
                         </button>
                     </div>
                     <div className="absolute -bottom-4 -right-4 opacity-10">

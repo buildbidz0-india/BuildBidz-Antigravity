@@ -1,6 +1,7 @@
 import structlog
 import json
 from datetime import datetime
+from typing import Optional, List, Dict
 from app.db.session import get_db_pool
 from app.db.models import AgentLog, AwardDecision
 
@@ -12,7 +13,7 @@ class Repository:
     Uses direct asyncpg for performance, mapping broadly to the SQLAlchemy models.
     """
     
-    async def log_agent_interaction(self, agent_name: str, role: str, content: str, session_id: str = None, meta: dict = None):
+    async def log_agent_interaction(self, agent_name: str, role: str, content: str, session_id: Optional[str] = None, meta: Optional[dict] = None):
         try:
             pool = get_db_pool()
             async with pool.acquire() as conn:
@@ -32,7 +33,7 @@ class Repository:
             # Don't crash the app if logging fails, but alert us
             logger.error("Failed to persist agent log", error=str(e))
 
-    async def save_award_decision(self, winner_bid_id: str, winner_supplier: str, score: float, justification: str, rankings: list, project_id: str = None):
+    async def save_award_decision(self, winner_bid_id: str, winner_supplier: str, score: float, justification: str, rankings: list, project_id: Optional[str] = None):
         try:
             pool = get_db_pool()
             async with pool.acquire() as conn:

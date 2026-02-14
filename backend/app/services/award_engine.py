@@ -173,8 +173,6 @@ class AwardEngine:
         # 3. AI Reasoning (via Router -> Model Award/GPT-OSS 120B)
         response = await groq_service.award_compare(messages, temperature=0.3)
         justification = response.choices[0].message.content
-
-        )
         
         # 4. Persist Decision
         from app.db.repository import repo

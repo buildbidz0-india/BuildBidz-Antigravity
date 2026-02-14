@@ -319,7 +319,7 @@ async def update_whatsapp_message(
     language: str,
 ) -> None:
     """Update WhatsApp message with transcription."""
-    pool = await get_db_pool()
+    pool = get_db_pool()
 
     async with pool.acquire() as conn:
         await conn.execute(
@@ -454,7 +454,7 @@ def transcribe_batch(message_ids: list[str]) -> dict:
     for message_id in message_ids:
         try:
             # Get storage path from database
-            pool = asyncio.get_event_loop().run_until_complete(get_db_pool())
+            pool = get_db_pool()
             
             async def get_path():
                 async with pool.acquire() as conn:
