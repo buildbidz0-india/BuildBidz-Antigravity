@@ -7,7 +7,6 @@ import {
     Clock,
     AlertCircle,
     FileText,
-    FileText,
     MessageSquare,
     Brain
 } from "lucide-react";
