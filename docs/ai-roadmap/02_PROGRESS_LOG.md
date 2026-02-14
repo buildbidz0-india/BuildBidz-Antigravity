@@ -160,7 +160,37 @@
 | `task.md` | Modified | Marked Phase 4 complete |
 
 ### Where We Stopped
-**Status:** Phase 4 (Local Facilitator) complete. The system can now communicate with contractors in their native language. Next step is Phase 5: Extraction Specialist.
+**Status:** Phase 4 (Local Facilitator) complete. Started Phase 5.
+
+---
+
+## Session 6 — 2026-02-14 (10:25 AM IST)
+
+### Context
+- Implementation of Phase 5: Extraction Specialist (Magic Extractor)
+
+### Actions Completed
+1. ✅ **Implemented Extraction Agent** — `backend/app/services/extraction_agent.py` — Created service to parse OCR text into structured JSON using `GPT-OSS 20B` (Llama 3 8B equivalent).
+2. ✅ **Created Magic Extractor Worker** — `backend/app/workers/magic_extractor.py` — Implemented Celery task that coordinates OCR → JSON Extraction.
+3. ✅ **Structured Output** — Defined Pydantic models for `LineItem`, `GSTIN`, `PAN`, and `Total Amount`.
+4. ✅ **Verification** — Created `verify_extraction.py` to test the pipeline on a sample invoice textual representation.
+5. ✅ **Logic** — Added `verification_ready` flag logic (True if GSTIN + Total Amount are present).
+
+### Key Decisions
+- **JSON Mode:** Used prompt engineering to force the model to output valid JSON matching the provided schema.
+- **Validation:** Implemented logic to check for critical fields (GSTIN) to drastically reduce manual verification needs.
+
+### Files Created/Modified
+| File | Action | Description |
+|---|---|---|
+| `backend/app/services/extraction_agent.py` | Created | Agent service with parsing logic |
+| `backend/app/workers/magic_extractor.py` | Created | Worker for background processing |
+| `verify_extraction.py` | Created | Verification script |
+| `task.md` | Modified | Marked Phase 5 complete |
+
+### Where We Stopped
+**Status:** Phase 5 (Extraction Specialist) complete. The system can now extract structured data from unstructured documents. Next step is Phase 6: Field Voice (ASR).
+
 
 
 
