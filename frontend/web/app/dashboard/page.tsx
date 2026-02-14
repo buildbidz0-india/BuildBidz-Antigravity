@@ -32,7 +32,7 @@ export default function DashboardPage() {
             <div className="flex items-end justify-between">
                 <div>
                     <h2 className="text-3xl font-bold text-gray-900">Dashboard Overview</h2>
-                    <p className="text-gray-500 mt-1">Welcome back, here's what's happening today.</p>
+                    <p className="text-gray-500 mt-1">Welcome back, here&apos;s what&apos;s happening today.</p>
                 </div>
                 <button className="bg-orange-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200">
                     New Project
