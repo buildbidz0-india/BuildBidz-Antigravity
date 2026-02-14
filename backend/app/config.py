@@ -3,7 +3,7 @@
 # =============================================================================
 
 from typing import List, Optional
-from pydantic import Field, PostgresDsn, RedisDsn
+from pydantic import Field, PostgresDsn, RedisDsn, validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -45,6 +45,23 @@ class Settings(BaseSettings):
     OPENAI_ORG_ID: Optional[str] = None
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
     OPENAI_EMBEDDING_MODEL: str = "text-embedding-3-small"
+    
+    # Groq
+    GROQ_API_KEYS: List[str] = Field(default_factory=list)
+    GROQ_MODEL: str = "llama3-70b-8192"
+
+    @validator("GROQ_API_KEYS", pre=True)
+    def parse_groq_api_keys(cls, v):
+        if isinstance(v, str):
+            return [k.strip() for k in v.split(",") if k.strip()]
+        return v
+    GROQ_MODEL_20B: str = "openai/gpt-oss-20b"
+    GROQ_MODEL_120B: str = "openai/gpt-oss-120b"
+    
+    # Pinecone
+    PINECONE_API_KEY: str = ""
+    PINECONE_ENVIRONMENT: str = "us-east-1"
+    PINECONE_INDEX_NAME: str = "buildbidz-docs"
     
     # Security
     SECRET_KEY: str = "change-this-in-production"

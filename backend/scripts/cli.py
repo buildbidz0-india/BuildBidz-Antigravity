@@ -325,6 +325,52 @@ def report_daily(
 
 
 # =============================================================================
+# AI Commands
+# =============================================================================
+
+ai_app = typer.Typer(help="AI and LLM utilities")
+app.add_typer(ai_app, name="ai")
+
+@ai_app.command("groq-test")
+def groq_test(
+    prompt: str = typer.Option("Explain why construction software is important for India.", "--prompt", "-p"),
+    model: str = typer.Option(None, "--model", "-m", help="Specific model to use (e.g., 20b, 120b)"),
+):
+    """Test Groq AI integration."""
+    async def run_test():
+        from app.services.ai import groq_service
+        
+        # Map shortcuts
+        target_model = None
+        if model == "20b":
+            target_model = groq_service.model_20b
+        elif model == "120b":
+            target_model = groq_service.model_120b
+        else:
+            target_model = model
+            
+        console.print(f"[cyan]Testing Groq with model:[/cyan] {target_model or 'default'}")
+        console.print(f"[cyan]Prompt:[/cyan] {prompt}")
+        
+        try:
+            with console.status("Querying Groq..."):
+                result = await groq_service.chat_completion(
+                    [{"role": "user", "content": prompt}],
+                    model=target_model
+                )
+                
+            content = result.choices[0].message.content
+            console.print("\n[bold green]Response from Groq:[/bold green]")
+            console.print(content)
+            console.print(f"\n[dim]Model: {result.model}[/dim]")
+        except Exception as e:
+            console.print(f"[red]✗ Groq test failed: {e}[/red]")
+            raise typer.Exit(1)
+            
+    asyncio.run(run_test())
+
+
+# =============================================================================
 # Main
 # =============================================================================
 

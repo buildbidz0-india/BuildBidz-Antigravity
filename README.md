@@ -68,6 +68,18 @@ An end-to-end construction platform for the Indian market featuring bidding, pro
    python -m app.main
    ```
 
+### AI Integration (Groq)
+
+BuildBidz uses Groq for high-speed LLM inference. To configure:
+1. Add `GROQ_API_KEY` to your `.env` file.
+2. (Optional) Set `GROQ_MODEL` (default: `llama3-70b-8192`).
+
+Test the integration:
+```bash
+cd backend
+python -m scripts.cli ai groq-test --prompt "How can AI help Indian construction projects?"
+```
+
 ## 📁 Project Structure
 
 ```

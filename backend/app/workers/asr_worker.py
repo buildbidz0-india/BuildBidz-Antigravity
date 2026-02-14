@@ -16,6 +16,7 @@ import structlog
 from app.config import settings
 from app.workers.celery_app import celery_app
 from app.db.session import get_db_pool
+from app.core.ai_rotator import APIKeyRotator
 
 logger = structlog.get_logger()
 
@@ -131,6 +132,77 @@ class WhisperASR:
                 ],
                 "provider": "whisper",
             }
+
+
+class GroqASR:
+    """
+    Groq Cloud Whisper ASR.
+    Extremely fast inference with automatic key rotation.
+    """
+
+    def __init__(self):
+        self.rotator = APIKeyRotator(settings.GROQ_API_KEYS, service_name="Groq ASR")
+        self.endpoint = "https://api.groq.com/openai/v1/audio/transcriptions"
+
+    async def transcribe(
+        self,
+        audio_bytes: bytes,
+        language: Optional[str] = None,
+        retry_count: int = 0
+    ) -> dict:
+        """Transcribe audio using Groq Whisper with rotation."""
+        key = self.rotator.get_key()
+        if not key:
+            raise ValueError("Groq API key not configured")
+
+        async with httpx.AsyncClient() as client:
+            files = {"file": ("audio.wav", audio_bytes, "audio/wav")}
+            data = {
+                "model": "whisper-large-v3",
+                "response_format": "verbose_json",
+            }
+            if language:
+                lang_map = {"hi-IN": "hi", "en-IN": "en", "ta-IN": "ta", "te-IN": "te"}
+                data["language"] = lang_map.get(language, language[:2])
+
+            try:
+                response = await client.post(
+                    self.endpoint,
+                    headers={"Authorization": f"Bearer {key}"},
+                    files=files,
+                    data=data,
+                    timeout=60.0,
+                )
+
+                if response.status_code != 200:
+                    error_text = response.text
+                    if response.status_code == 429 or "rate limit" in error_text.lower():
+                        if retry_count < len(self.rotator.keys):
+                            logger.warning("Groq ASR rate limit hit, rotating key and retrying", retry=retry_count)
+                            self.rotator.mark_limited(key)
+                            return await self.transcribe(audio_bytes, language, retry_count + 1)
+                    
+                    raise Exception(f"Groq API error: {response.status_code} - {error_text}")
+
+                result = response.json()
+
+                return {
+                    "text": result.get("text", ""),
+                    "language": result.get("language", language),
+                    "confidence": 0.95,
+                    "segments": [
+                        {
+                            "start": seg.get("start"),
+                            "end": seg.get("end"),
+                            "text": seg.get("text"),
+                        }
+                        for seg in result.get("segments", [])
+                    ],
+                    "provider": "groq",
+                }
+            except httpx.HTTPError as e:
+                logger.error("Groq ASR HTTP error", error=str(e))
+                raise
 
 
 class LocalWhisperASR:
@@ -310,26 +382,33 @@ async def _transcribe_audio(
     # Detect language if not provided
     language = language_hint or detect_audio_language(audio_bytes)
 
-    # Try Sarvam AI first for Indian languages
+    # Try Groq first (extremely fast)
     try:
-        if language.startswith(("hi", "ta", "te", "kn", "ml", "mr", "bn", "gu", "pa")):
-            sarvam = SarvamASR()
-            result = await sarvam.transcribe(audio_bytes, language)
-        else:
-            raise ValueError("Non-Indian language, use Whisper")
-    except Exception as sarvam_error:
-        logger.warning("Sarvam AI failed, trying Whisper", error=str(sarvam_error))
+        groq = GroqASR()
+        result = await groq.transcribe(audio_bytes, language)
+    except Exception as groq_error:
+        logger.warning("Groq ASR failed, trying Sarvam/Whisper", error=str(groq_error))
 
-        # Fallback to Whisper
+        # Try Sarvam AI for Indian languages
         try:
-            whisper = WhisperASR()
-            result = await whisper.transcribe(audio_bytes, language)
-        except Exception as whisper_error:
-            logger.warning("Whisper API failed, trying local", error=str(whisper_error))
+            if language.startswith(("hi", "ta", "te", "kn", "ml", "mr", "bn", "gu", "pa")):
+                sarvam = SarvamASR()
+                result = await sarvam.transcribe(audio_bytes, language)
+            else:
+                raise ValueError("Non-Indian language, use Whisper")
+        except Exception as sarvam_error:
+            logger.warning("Sarvam AI failed, trying Whisper", error=str(sarvam_error))
 
-            # Fallback to local Whisper
-            local_whisper = LocalWhisperASR()
-            result = await local_whisper.transcribe(audio_bytes, language)
+            # Fallback to Whisper
+            try:
+                whisper = WhisperASR()
+                result = await whisper.transcribe(audio_bytes, language)
+            except Exception as whisper_error:
+                logger.warning("Whisper API failed, trying local", error=str(whisper_error))
+
+                # Fallback to local Whisper
+                local_whisper = LocalWhisperASR()
+                result = await local_whisper.transcribe(audio_bytes, language)
 
     # Update WhatsApp message with transcription
     await update_whatsapp_message(
