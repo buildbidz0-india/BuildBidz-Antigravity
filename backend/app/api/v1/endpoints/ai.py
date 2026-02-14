@@ -130,9 +130,8 @@ async def ingest_document(request: IngestRequest):
 
 @router.get("/health")
 async def ai_health():
-    """AI service health check."""
-    return {
-        "status": "healthy",
-        "groq_enabled": groq_service.client is not None,
-        "openai_enabled": groq_service.openai_client is not None
-    }
+    """
+    Check the health status of the AI Model Router.
+    Returns the state of all circuit breakers and model availability.
+    """
+    return groq_service.get_health()
