@@ -103,7 +103,9 @@ class WhisperASR:
             if language:
                 # Convert to ISO 639-1 code
                 lang_map = {"hi-IN": "hi", "en-IN": "en", "ta-IN": "ta", "te-IN": "te"}
-                data["language"] = lang_map.get(language, language[:2])
+                # Ensure language is treated as string for linter
+                lang_code = str(language)
+                data["language"] = lang_map.get(lang_code, lang_code[:2])
 
             response = await client.post(
                 self.endpoint,
@@ -164,7 +166,8 @@ class GroqASR:
             }
             if language:
                 lang_map = {"hi-IN": "hi", "en-IN": "en", "ta-IN": "ta", "te-IN": "te"}
-                data["language"] = lang_map.get(language, language[:2])
+                lang_code = str(language)
+                data["language"] = lang_map.get(lang_code, lang_code[:2])
 
             # Inject vocabulary via prompt if provided
             if "prompt" in kwargs:
@@ -261,9 +264,12 @@ class LocalWhisperASR:
 
     def _transcribe_sync(self, audio_path: str, language: Optional[str]) -> dict:
         """Sync transcription for thread pool."""
+        if self.model is None:
+            raise ValueError("Model not initialized")
+            
         segments, info = self.model.transcribe(
             audio_path,
-            language=language[:2] if language else None,
+            language=str(language)[:2] if language else None,
             beam_size=5,
             word_timestamps=True,
         )

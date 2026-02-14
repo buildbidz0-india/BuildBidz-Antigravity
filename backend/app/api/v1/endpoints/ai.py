@@ -52,10 +52,34 @@ async def chat_with_groq(request: ChatRequest):
                 temperature=request.temperature
             )
         
+        
+        # Log to DB
+        import uuid
+        session_id = str(uuid.uuid4()) # For now, one-off session
+        from app.db.repository import repo
+        
+        # Log User Request
+        await repo.log_agent_interaction(
+            agent_name="Groq-Chat",
+            role="user",
+            content=request.messages[-1].content if request.messages else "",
+            session_id=session_id
+        )
+        
+        # Log Assistant Response
+        await repo.log_agent_interaction(
+            agent_name="Groq-Chat",
+            role="assistant",
+            content=result.choices[0].message.content,
+            session_id=session_id,
+            meta=result.usage.model_dump() if hasattr(result, 'usage') else {}
+        )
+
         return {
             "content": result.choices[0].message.content,
             "model": result.model,
-            "usage": result.usage.model_dump() if hasattr(result, 'usage') else None
+            "usage": result.usage.model_dump() if hasattr(result, 'usage') else None,
+            "session_id": session_id
         }
     except Exception as e:
         logger.error("Groq chat error", error=str(e))
@@ -85,10 +109,34 @@ async def chat_with_rag(request: RagChatRequest):
             temperature=request.temperature
         )
         
+        
+        # Log to DB
+        import uuid
+        session_id = str(uuid.uuid4())
+        from app.db.repository import repo
+        
+        # Log User Request
+        await repo.log_agent_interaction(
+            agent_name="Groq-RAG",
+            role="user",
+            content=request.query,
+            session_id=session_id
+        )
+        
+        # Log Assistant Response
+        await repo.log_agent_interaction(
+            agent_name="Groq-RAG",
+            role="assistant",
+            content=result.choices[0].message.content,
+            session_id=session_id,
+            meta=result.usage.model_dump() if hasattr(result, 'usage') else {}
+        )
+
         return {
             "content": result.choices[0].message.content,
             "model": result.model,
-            "usage": result.usage.model_dump() if hasattr(result, 'usage') else None
+            "usage": result.usage.model_dump() if hasattr(result, 'usage') else None,
+            "session_id": session_id
         }
     except Exception as e:
         logger.error("RAG chat error", error=str(e))

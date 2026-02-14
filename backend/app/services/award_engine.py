@@ -174,6 +174,19 @@ class AwardEngine:
         response = await groq_service.award_compare(messages, temperature=0.3)
         justification = response.choices[0].message.content
 
+        )
+        
+        # 4. Persist Decision
+        from app.db.repository import repo
+        await repo.save_award_decision(
+            winner_bid_id=top_bid["bid"].id,
+            winner_supplier=top_bid["bid"].supplier_name,
+            score=top_bid["scores"]["total"],
+            justification=justification,
+            rankings=ranked_bids,
+            project_id="PROJECT-123" # Placeholder for now
+        )
+        
         return AwardDecision(
             recommended_bid_id=top_bid["bid"].id,
             score=top_bid["scores"]["total"],
@@ -186,7 +199,8 @@ class AwardEngine:
                     "breakdown": r["scores"]
                 }
                 for i, r in enumerate(ranked_bids)
-            ]
+            ],
+            meta={"persisted": True}
         )
 
 # Global Instance
