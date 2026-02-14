@@ -74,7 +74,36 @@
 | `verify_router.py` | Created | Verification script |
 
 ### Where We Stopped
-**Status:** Phase 1 (Foundation) complete. The system now has a robust multi-model routing layer with circuit breakers. Next step is Phase 2: Compare & Award Engine.
+**Status:** Phase 1 (Model Router Foundation) complete. Started Phase 2.
+
+---
+
+## Session 3 — 2026-02-14 (10:10 AM IST)
+
+### Context
+- Implementation of Phase 2: Strategic Decision Engine (Compare & Award)
+
+### Actions Completed
+1. ✅ **Implemented Award Engine Service** — `backend/app/services/award_engine.py` — Created `AwardEngine` class with weighted scoring logic (Price 50%, Speed 30%, Reputation 20%) and AI justification generation using `GPT-OSS 120B`.
+2. ✅ **Created Award API** — `backend/app/api/v1/endpoints/award.py` — Exposed `/api/v1/awards/compare` and `/score-only` endpoints.
+3. ✅ **Registered Utility Routes** — Added awards router to `backend/app/api/v1/router.py`.
+4. ✅ **Verification** — Created `verify_award.py` to test the multi-factor scoring math (verified Price, Delivery, and Reputation weights work correctly).
+
+### Key Decisions
+- **Scoring Weights:** Used Roadmap defaults (Price 0.5, Delivery 0.3, Reputation 0.2) as default but made them configurable via API payload.
+- **AI Context:** Feeding only top 3 mathematically-ranked bids to the LLM to reduce context window usage and improve reasoning quality.
+
+### Files Created/Modified
+| File | Action | Description |
+|---|---|---|
+| `backend/app/services/award_engine.py` | Created | Core scoring & AI logic |
+| `backend/app/api/v1/endpoints/award.py` | Created | REST API for bid comparison |
+| `backend/app/api/v1/router.py` | Modified | Added /awards route |
+| `verify_award.py` | Created | Scoring verification script |
+
+### Where We Stopped
+**Status:** Phase 2 (Award Engine) complete. The system can now mathematically score bids and generate AI-driven justifications. Next step is Phase 3: Price Forecasting Engine.
+
 
 
 ---
