@@ -44,13 +44,18 @@ export default function DashboardPage() {
     const [createProjectOpen, setCreateProjectOpen] = useState(false);
     const [stats, setStats] = useState<ProjectStats | null>(null);
     const [recentProjects, setRecentProjects] = useState<ApiProject[]>([]);
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [recentLoading, setRecentLoading] = useState(true);
+
+    const refetch = () => {
+        setStatsLoading(true);
+        setRecentLoading(true);
+        projectsApi.stats().then(setStats).catch(() => setStats(null)).finally(() => setStatsLoading(false));
+        projectsApi.list().then((list) => setRecentProjects(list.slice(0, 5))).catch(() => setRecentProjects([])).finally(() => setRecentLoading(false));
+    };
 
     useEffect(() => {
-        projectsApi.stats().then(setStats).catch(() => setStats(null));
-    }, [createProjectOpen]);
-
-    useEffect(() => {
-        projectsApi.list().then((list) => setRecentProjects(list.slice(0, 5))).catch(() => setRecentProjects([]));
+        refetch();
     }, [createProjectOpen]);
 
     const getStatValue = (item: (typeof statConfig)[0]): string => {
