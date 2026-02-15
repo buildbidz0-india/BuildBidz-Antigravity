@@ -20,6 +20,14 @@
 
 ---
 
+## What’s next (optional)
+
+1. **Phase 8 tests** — Run verification scripts: `verify_router.py`, `verify_award.py`, etc. (from repo root). Automated smoke test: `pytest backend/tests/test_ai_endpoints.py` (covers `GET /api/v1/ai/health`). Add more E2E or load tests as needed.
+2. **On-device fallback** — Documented as *Future* in `01_IMPLEMENTATION_PLAN.md` and `00_ROADMAP_ANALYSIS.md`. Implement when prioritised (mobile + local model).
+3. **Product** — Wire Bids page to real tenders; add more materials/regions to Forecast; optional file upload for Magic Extractor (OCR → extract).
+
+---
+
 ## ✅ DONE (Verified in Codebase)
 
 ### Phase 1: Model Router & Reliability Layer
