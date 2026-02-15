@@ -15,7 +15,14 @@ import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
-import { projectsApi, type ProjectStats, type ApiProject } from "@/lib/api";
+import { projectsApi, awardsApi, type ProjectStats, type ApiProject, type AwardDecision, type AwardBid } from "@/lib/api";
+
+const SAMPLE_BIDS: AwardBid[] = [
+    { id: "b1", supplier_name: "Larsen & Toubro", price: 1480000, delivery_days: 21, reputation_score: 9.2 },
+    { id: "b2", supplier_name: "Tata Projects", price: 1520000, delivery_days: 18, reputation_score: 8.8 },
+    { id: "b3", supplier_name: "NCC Ltd", price: 1420000, delivery_days: 28, reputation_score: 7.5 },
+    { id: "b4", supplier_name: "Shapoorji", price: 1550000, delivery_days: 20, reputation_score: 8.5 },
+];
 
 const statConfig = [
     { label: "Active Projects", key: "active" as const, icon: Construction, trend: "From projects", color: "text-blue-600", bg: "bg-blue-50" },
@@ -46,6 +53,8 @@ export default function DashboardPage() {
     const [recentProjects, setRecentProjects] = useState<ApiProject[]>([]);
     const [statsLoading, setStatsLoading] = useState(true);
     const [recentLoading, setRecentLoading] = useState(true);
+    const [awardDecision, setAwardDecision] = useState<AwardDecision | null>(null);
+    const [awardLoading, setAwardLoading] = useState(true);
 
     const refetch = () => {
         setStatsLoading(true);
@@ -57,6 +66,15 @@ export default function DashboardPage() {
     useEffect(() => {
         refetch();
     }, [createProjectOpen]);
+
+    useEffect(() => {
+        setAwardLoading(true);
+        awardsApi
+            .compare("TMT Steel supply for Phase 1", SAMPLE_BIDS)
+            .then(setAwardDecision)
+            .catch(() => setAwardDecision(null))
+            .finally(() => setAwardLoading(false));
+    }, []);
 
     const getStatValue = (item: (typeof statConfig)[0]): string => {
         if ("value" in item && item.value != null) return item.value;
@@ -81,24 +99,43 @@ export default function DashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statConfig.map((stat, index) => (
-                    <motion.div
-                        key={stat.label}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
-                    >
-                        <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 text-2xl`}>
-                            <stat.icon size={24} />
-                        </div>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
-                        <div className="flex items-baseline space-x-2 mt-1">
-                            <h3 className="text-3xl font-bold text-gray-900">{getStatValue(stat)}</h3>
-                            <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
-                        </div>
-                    </motion.div>
-                ))}
+                {statsLoading ? (
+                    statConfig.map((stat, index) => (
+                        <motion.div
+                            key={stat.label}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.05 }}
+                            className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
+                        >
+                            <div className={`w-12 h-12 ${stat.bg} rounded-xl mb-4 animate-pulse bg-gray-200`} />
+                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
+                            <div className="flex items-baseline space-x-2 mt-1">
+                                <span className="h-8 w-12 bg-gray-200 rounded animate-pulse inline-block" />
+                                <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
+                            </div>
+                        </motion.div>
+                    ))
+                ) : (
+                    statConfig.map((stat, index) => (
+                        <motion.div
+                            key={stat.label}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
+                        >
+                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 text-2xl`}>
+                                <stat.icon size={24} />
+                            </div>
+                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
+                            <div className="flex items-baseline space-x-2 mt-1">
+                                <h3 className="text-3xl font-bold text-gray-900">{getStatValue(stat)}</h3>
+                                <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
+                            </div>
+                        </motion.div>
+                    ))
+                )}
             </div>
 
             {/* AI Insights Section */}
@@ -108,7 +145,7 @@ export default function DashboardPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.4 }}
                 >
-                    <BidScoringChart />
+                    <BidScoringChart decision={awardDecision} loading={awardLoading} />
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
@@ -132,7 +169,17 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     <div className="divide-y divide-gray-50">
-                        {recentProjects.length === 0 ? (
+                        {recentLoading ? (
+                            [...Array(4)].map((_, i) => (
+                                <div key={i} className="p-6 flex items-start space-x-4">
+                                    <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
+                                    <div className="flex-1 min-w-0 space-y-2">
+                                        <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                                        <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : recentProjects.length === 0 ? (
                             <div className="p-6 text-center text-gray-500 text-sm">
                                 No recent projects. Create one to see activity here.
                             </div>
