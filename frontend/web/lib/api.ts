@@ -458,6 +458,7 @@ export const transcribeApi = {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.detail || "Transcription failed");
         }
+        return response.json();
     },
 };
 

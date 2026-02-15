@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MoreHorizontal, Eye, Edit, Archive } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Archive, Scale } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -101,8 +101,8 @@ export function TenderTable({ tenders }: TenderTableProps) {
                                             <Eye className="mr-2 h-4 w-4" /> View Details
                                         </DropdownMenuItem>
                                         <DropdownMenuItem asChild>
-                                            <Link href="/dashboard/compare">
-                                                <Eye className="mr-2 h-4 w-4" /> Compare AI
+                                            <Link href={`/dashboard/compare?tenderId=${tender.id}`}>
+                                                <Scale className="mr-2 h-4 w-4" /> Analyze with AI
                                             </Link>
                                         </DropdownMenuItem>
                                         <DropdownMenuItem>
