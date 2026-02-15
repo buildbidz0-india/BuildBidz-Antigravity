@@ -5,6 +5,7 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     if (typeof window === "undefined") return {};
     try {
         const { auth } = await import("@/lib/firebase/config");
+        if (!auth) return {};
         const token = await auth.currentUser?.getIdToken();
         return token ? { Authorization: `Bearer ${token}` } : {};
     } catch {

@@ -57,6 +57,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const pathname = usePathname();
 
     useEffect(() => {
+        if (!auth) {
+            setIsLoading(false);
+            return;
+        }
         const unsubscribe = onAuthStateChanged(auth, (authUser) => {
             setUser(authUser);
             setIsLoading(false);
@@ -78,6 +82,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Sign in with email and password
     const signIn = async (email: string, password: string) => {
+        if (!auth) throw new Error("Auth is not configured. Add Firebase keys to .env.");
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (error) {
@@ -92,6 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password: string,
         metadata?: object
     ) => {
+        if (!auth) throw new Error("Auth is not configured. Add Firebase keys to .env.");
         try {
             const { user } = await createUserWithEmailAndPassword(auth, email, password);
             // Metadata handling would go here, e.g., updating profile
@@ -106,6 +112,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Sign out
     const signOut = async () => {
+        if (!auth) return;
         try {
             await firebaseSignOut(auth);
         } catch (error) {
@@ -116,6 +123,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Sign in with OTP (for phone)
     const signInWithOtp = async (phone: string) => {
+        if (!auth) throw new Error("Auth is not configured. Add Firebase keys to .env.");
         try {
             // Recaptcha verifier needs a container in the DOM
             // This is a simplified version; in a real app, you'd handle the widget
@@ -132,6 +140,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Verify OTP
     const verifyOtp = async (token: string) => {
+        if (!auth) throw new Error("Auth is not configured. Add Firebase keys to .env.");
         try {
             if (!confirmationResult) {
                 throw new Error("No pending confirmation found");

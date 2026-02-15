@@ -1,11 +1,14 @@
 // =============================================================================
 // BuildBidz - Firebase Client Configuration
 // =============================================================================
+// Firebase is initialized only in the browser so that build/prerender does not
+// require valid API keys. Auth/db/storage are null during SSR or when keys are missing.
+// =============================================================================
 
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,12 +20,29 @@ const firebaseConfig = {
     measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-// Initialize Firebase
-const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+function isClientAndConfigured(): boolean {
+    if (typeof window === "undefined") return false;
+    const key = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    return !!key && key !== "your-api-key" && !key.startsWith("your-");
+}
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+let app: FirebaseApp | null = null;
+let auth: Auth | null = null;
+let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 
+if (isClientAndConfigured()) {
+    try {
+        app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+        auth = getAuth(app);
+        db = getFirestore(app);
+        storage = getStorage(app);
+    } catch {
+        // Invalid config or network – leave null so app still loads
+    }
+}
+
+export { auth };
+export { db };
+export { storage };
 export default app;
