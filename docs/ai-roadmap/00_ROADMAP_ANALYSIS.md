@@ -106,4 +106,4 @@ Primary Model (task-designated Groq model)
 | Magic Extractor (Unstructured→JSON) | Basic OCR worker exists | Enhance with structured output + KYC |
 | Whisper V3 ASR | Basic ASR worker exists | Enhance with construction vocabulary |
 | Circuit breaker / failover | Not implemented | New reliability layer required |
-| On-device fallback | Not implemented | Mobile app enhancement needed |
+| On-device fallback | Not implemented | **Deferred.** Mobile app enhancement: local model (e.g. Mistral-7B) when offline; queue until sync. See Implementation Plan "Future: On-Device Fallback". |

@@ -155,3 +155,17 @@ CIRCUIT_BREAKER_RECOVERY_TIMEOUT_S=60
 FALLBACK_TIER1_MODEL=llama-3.3-70b-versatile
 FALLBACK_LOCAL_MODEL=mistral-7b
 ```
+
+---
+
+### Phase 8: Testing & Launch
+**Depends on: Phases 1–7**
+
+- **Verification scripts (repo root):** `verify_router.py`, `verify_award.py`, `verify_forecast.py`, `verify_coordination.py`, `verify_extraction.py`, `verify_asr.py`, `verify_performance.py` — run against backend to validate routing, scoring, and latency.
+- **Automated tests:** Add `backend/tests/test_ai_endpoints.py` (or similar) for API smoke tests (e.g. `GET /api/v1/ai/health`). E2E and load tests vs 5s SLA as needed.
+- **Launch:** Docs and env vars in README; monitor circuit breaker and model health in production.
+
+---
+
+### Future: On-Device Fallback
+**Deferred per roadmap.** When connectivity drops (e.g. basement site), the mobile app may use a local model (Mistral-7B / OpenHermes) and queue data until sync. Document in architecture when prioritised.
