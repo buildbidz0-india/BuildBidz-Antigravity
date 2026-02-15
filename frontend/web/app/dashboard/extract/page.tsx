@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { FileText, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, Loader2, CheckCircle2, AlertCircle, Upload } from "lucide-react";
 import { extractApi, type ExtractResult } from "@/lib/api";
 import { toast } from "react-hot-toast";
 
@@ -41,6 +41,20 @@ export default function ExtractPage() {
     };
 
     const loadSample = () => setOcrText(SAMPLE_OCR);
+
+    const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+            const text = typeof reader.result === "string" ? reader.result : "";
+            setOcrText(text);
+            setResult(null);
+            toast.success("File loaded. Click Extract to run.");
+        };
+        reader.readAsText(file, "UTF-8");
+        e.target.value = "";
+    };
 
     return (
         <div className="space-y-8">
