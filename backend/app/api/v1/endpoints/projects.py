@@ -38,6 +38,17 @@ class ProjectUpdate(BaseModel):
     milestones: Optional[list[ProjectMilestone]] = None
 
 
+@router.get("/stats")
+async def project_stats(
+    firebase_user: Optional[TokenPayload] = Depends(get_firebase_payload_optional),
+):
+    """Return project counts for dashboard (total, active, planning)."""
+    try:
+        return await repo.get_projects_stats()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.get("")
 async def list_projects(
     firebase_user: Optional[TokenPayload] = Depends(get_firebase_payload_optional),

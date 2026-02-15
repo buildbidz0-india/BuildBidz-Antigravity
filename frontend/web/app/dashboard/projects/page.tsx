@@ -23,6 +23,9 @@ export default function ProjectsPage() {
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [projects, setProjects] = useState<ApiProject[]>([]);
     const [loading, setLoading] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<string>("");
+    const [filterOpen, setFilterOpen] = useState(false);
 
     const fetchProjects = useCallback(async () => {
         setLoading(true);
@@ -40,7 +43,19 @@ export default function ProjectsPage() {
         fetchProjects();
     }, [fetchProjects]);
 
-    const displayList = projects.length > 0 ? projects : (MOCK_PROJECTS as unknown as ApiProject[]);
+    const rawList = projects.length > 0 ? projects : (MOCK_PROJECTS as unknown as ApiProject[]);
+    const displayList = rawList.filter((p) => {
+        const q = searchQuery.trim().toLowerCase();
+        if (q) {
+            const matchName = p.name.toLowerCase().includes(q);
+            const matchLocation = (p.location || "").toLowerCase().includes(q);
+            if (!matchName && !matchLocation) return false;
+        }
+        if (statusFilter) {
+            if ((p.status || "").toLowerCase() !== statusFilter.toLowerCase()) return false;
+        }
+        return true;
+    });
 
     return (
         <div className="space-y-8">
@@ -66,14 +81,47 @@ export default function ProjectsPage() {
                     </span>
                     <input
                         type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
                         className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
                         placeholder="Search projects by name or location..."
                     />
                 </div>
-                <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-gray-600 transition-colors font-medium">
-                    <Filter size={18} className="mr-2" />
-                    Filter
-                </button>
+                <div className="relative">
+                    <button
+                        type="button"
+                        onClick={() => setFilterOpen((o) => !o)}
+                        className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-gray-600 transition-colors font-medium"
+                    >
+                        <Filter size={18} className="mr-2" />
+                        Filter
+                    </button>
+                    {filterOpen && (
+                        <div className="absolute right-0 top-full mt-1 py-2 bg-white border border-gray-200 rounded-xl shadow-lg z-10 min-w-[140px]">
+                            <button
+                                type="button"
+                                onClick={() => { setStatusFilter(""); setFilterOpen(false); }}
+                                className={`block w-full text-left px-4 py-2 text-sm ${!statusFilter ? "bg-orange-50 text-orange-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                            >
+                                All statuses
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setStatusFilter("Active"); setFilterOpen(false); }}
+                                className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === "Active" ? "bg-orange-50 text-orange-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                            >
+                                Active
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => { setStatusFilter("Planning"); setFilterOpen(false); }}
+                                className={`block w-full text-left px-4 py-2 text-sm ${statusFilter === "Planning" ? "bg-orange-50 text-orange-700 font-medium" : "text-gray-700 hover:bg-gray-50"}`}
+                            >
+                                Planning
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Projects Grid */}
@@ -89,6 +137,11 @@ export default function ProjectsPage() {
                             </div>
                         </div>
                     ))}
+                </div>
+            ) : displayList.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+                    <p className="text-gray-500 font-medium">No projects match your search or filter.</p>
+                    <p className="text-sm text-gray-400 mt-1">Try clearing the search or filter.</p>
                 </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

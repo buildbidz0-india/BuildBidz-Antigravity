@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
     Construction,
@@ -15,12 +15,13 @@ import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import { projectsApi, type ProjectStats } from "@/lib/api";
 
-const stats = [
-    { label: "Active Projects", value: "12", icon: Construction, trend: "+2 this month", color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Bids", value: "48", icon: TrendingUp, trend: "+15% vs last month", color: "text-green-600", bg: "bg-green-50" },
-    { label: "Pending RFIs", value: "7", icon: Clock, trend: "3 urgent", color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Alerts", value: "2", icon: AlertCircle, trend: "Requires attention", color: "text-red-600", bg: "bg-red-50" },
+const statConfig = [
+    { label: "Active Projects", key: "active" as const, icon: Construction, trend: "From projects", color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Total Projects", key: "total" as const, icon: TrendingUp, trend: "All projects", color: "text-green-600", bg: "bg-green-50" },
+    { label: "Planning", key: "planning" as const, icon: Clock, trend: "In planning", color: "text-orange-600", bg: "bg-orange-50" },
+    { label: "Alerts", value: "—", icon: AlertCircle, trend: "Requires attention", color: "text-red-600", bg: "bg-red-50" },
 ];
 
 const recentActivity = [
@@ -32,6 +33,17 @@ const recentActivity = [
 export default function DashboardPage() {
     const [copilotOpen, setCopilotOpen] = useState(false);
     const [createProjectOpen, setCreateProjectOpen] = useState(false);
+    const [stats, setStats] = useState<ProjectStats | null>(null);
+
+    useEffect(() => {
+        projectsApi.stats().then(setStats).catch(() => setStats(null));
+    }, [createProjectOpen]); // refetch after creating a project
+
+    const getStatValue = (item: (typeof statConfig)[0]): string => {
+        if ("value" in item && item.value != null) return item.value;
+        if (stats && "key" in item && item.key) return String(stats[item.key] ?? "0");
+        return "—";
+    };
 
     return (
         <div className="space-y-8">
@@ -50,7 +62,7 @@ export default function DashboardPage() {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat, index) => (
+                {statConfig.map((stat, index) => (
                     <motion.div
                         key={stat.label}
                         initial={{ opacity: 0, y: 20 }}
@@ -63,7 +75,7 @@ export default function DashboardPage() {
                         </div>
                         <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
                         <div className="flex items-baseline space-x-2 mt-1">
-                            <h3 className="text-3xl font-bold text-gray-900">{stat.value}</h3>
+                            <h3 className="text-3xl font-bold text-gray-900">{getStatValue(stat)}</h3>
                             <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
                         </div>
                     </motion.div>

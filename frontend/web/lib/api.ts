@@ -111,7 +111,25 @@ export interface ApiProject {
     created_at?: string | null;
 }
 
+export interface ProjectStats {
+    total: number;
+    active: number;
+    planning: number;
+}
+
 export const projectsApi = {
+    stats: async (): Promise<ProjectStats> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/projects/stats`, {
+            headers: { ...authHeaders },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to load stats");
+        }
+        return response.json();
+    },
+
     list: async (): Promise<ApiProject[]> => {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${BACKEND_URL}/projects`, {

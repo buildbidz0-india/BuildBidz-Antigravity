@@ -1,14 +1,31 @@
 "use client";
 
 import Sidebar from "@/components/sidebar";
-import { ProtectedRoute } from "@/lib/auth/auth-context";
-import { Bell, Search, User } from "lucide-react";
+import { ProtectedRoute, useAuth } from "@/lib/auth/auth-context";
+import { Bell, Search } from "lucide-react";
+
+function initialsFromUser(displayName: string | null, email: string | null): string {
+    if (displayName && displayName.trim()) {
+        const parts = displayName.trim().split(/\s+/);
+        if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+        return displayName.slice(0, 2).toUpperCase();
+    }
+    if (email && email.trim()) {
+        const local = email.split("@")[0];
+        return local.slice(0, 2).toUpperCase();
+    }
+    return "?";
+}
 
 export default function DashboardLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
+    const { user } = useAuth();
+    const displayName = user?.displayName ?? user?.email ?? "User";
+    const initials = initialsFromUser(user?.displayName ?? null, user?.email ?? null);
+
     return (
         <ProtectedRoute>
             <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -35,12 +52,16 @@ export default function DashboardLayout({
                             </button>
                             <div className="h-8 w-px bg-gray-200 mx-2" />
                             <button className="flex items-center space-x-3 p-1.5 rounded-xl hover:bg-gray-50 transition-colors">
-                                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-                                    JD
+                                <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm">
+                                    {initials}
                                 </div>
                                 <div className="hidden md:block text-left">
-                                    <p className="text-sm font-semibold text-gray-900 leading-none">John Doe</p>
-                                    <p className="text-xs text-gray-500 mt-1">Administrator</p>
+                                    <p className="text-sm font-semibold text-gray-900 leading-none truncate max-w-[140px]">
+                                        {displayName}
+                                    </p>
+                                    <p className="text-xs text-gray-500 mt-1 truncate max-w-[140px]">
+                                        {user?.email ?? "Administrator"}
+                                    </p>
                                 </div>
                             </button>
                         </div>

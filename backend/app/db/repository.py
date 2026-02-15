@@ -115,6 +115,23 @@ class Repository:
             )
             return _row_to_project(row)
 
+    async def get_projects_stats(self) -> Dict[str, int]:
+        """Return project counts: total, active, planning."""
+        pool = get_db_pool()
+        async with pool.acquire() as conn:
+            total = await conn.fetchval("SELECT COUNT(*) FROM projects")
+            active = await conn.fetchval(
+                "SELECT COUNT(*) FROM projects WHERE LOWER(TRIM(status)) = 'active'"
+            )
+            planning = await conn.fetchval(
+                "SELECT COUNT(*) FROM projects WHERE LOWER(TRIM(status)) = 'planning'"
+            )
+            return {
+                "total": total or 0,
+                "active": active or 0,
+                "planning": planning or 0,
+            }
+
     async def list_projects(self) -> List[Dict[str, Any]]:
         pool = get_db_pool()
         async with pool.acquire() as conn:
