@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Mic, Camera, FileText, Bell } from 'lucide-react-native';
+import { Mic, Camera, FileText, Bell, MessageSquare } from 'lucide-react-native';
 import { Link, useRouter } from 'expo-router';
 
 export default function DashboardScreen() {
@@ -24,7 +24,7 @@ export default function DashboardScreen() {
 
         {/* Quick Actions */}
         <Text className="text-lg font-bold text-gray-900 dark:text-white mb-4">Quick Actions</Text>
-        <View className="flex-row gap-4 mb-8">
+        <View className="flex-row gap-4 mb-4">
           <TouchableOpacity
             className="flex-1 bg-orange-500 rounded-xl p-4 items-center shadow-md active:opacity-90"
             onPress={() => router.push('/voice')}
@@ -44,6 +44,19 @@ export default function DashboardScreen() {
             </View>
             <Text className="text-white font-semibold">Scan Invoice</Text>
           </TouchableOpacity>
+        </View>
+
+        <View className="flex-row gap-4 mb-8">
+          <TouchableOpacity
+            className="flex-1 bg-green-600 rounded-xl p-4 items-center shadow-md active:opacity-90"
+            onPress={() => router.push('/coordination')}
+          >
+            <View className="bg-white/20 p-3 rounded-full mb-2">
+              <MessageSquare size={24} color="white" />
+            </View>
+            <Text className="text-white font-semibold">Contractor Msg</Text>
+          </TouchableOpacity>
+          <View className="flex-1" />
         </View>
 
         {/* Recent Activity */}
