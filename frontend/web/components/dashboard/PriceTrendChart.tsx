@@ -34,27 +34,24 @@ function formatDateLabel(dateStr: string): string {
     return d.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
 }
 
-export default function PriceTrendChart() {
-    const [material, setMaterial] = useState<ForecastMaterial>("steel");
-    const [region, setRegion] = useState<ForecastRegion>("delhi_ncr");
-    const [forecast, setForecast] = useState<ForecastResult | null>(null);
-    const [loading, setLoading] = useState(true);
+export interface PriceTrendChartProps {
+    forecast: ForecastResult | null;
+    loading: boolean;
+    material: ForecastMaterial;
+    region: ForecastRegion;
+    onConfigChange: (material: ForecastMaterial, region: ForecastRegion) => void;
+}
 
-    useEffect(() => {
-        setLoading(true);
-        forecastApi
-            .analyze({ material, region, quantity: 10 })
-            .then(setForecast)
-            .catch(() => setForecast(null))
-            .finally(() => setLoading(false));
-    }, [material, region]);
-
+export default function PriceTrendChart({ forecast, loading, material, region, onConfigChange }: PriceTrendChartProps) {
     const baseData =
         forecast?.historical_data?.map((p) => ({
             month: formatDateLabel(p.date),
             actual: p.price,
             forecast: null as number | null,
         })) ?? [];
+
+    // Sort baseData by date if needed, but assuming API returns sorted.
+
     const chartData =
         baseData.length && forecast
             ? [
@@ -66,22 +63,6 @@ export default function PriceTrendChart() {
                 },
             ]
             : baseData;
-
-    if (loading) {
-        return (
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full">
-                <div className="mb-6 flex justify-between items-start">
-                    <div>
-                        <h3 className="text-lg font-bold text-gray-900">Price Forecast</h3>
-                        <p className="text-sm text-gray-500">Trend analysis & AI lock recommendation</p>
-                    </div>
-                </div>
-                <div className="h-[300px] flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-600" />
-                </div>
-            </div>
-        );
-    }
 
     const lockBadge = forecast?.lock_rate_recommendation ? (
         <span className="bg-amber-100 text-amber-800 text-xs font-bold px-2 py-1 rounded-md border border-amber-200">
@@ -103,7 +84,7 @@ export default function PriceTrendChart() {
                 <div className="flex flex-wrap items-center gap-2">
                     <select
                         value={material}
-                        onChange={(e) => setMaterial(e.target.value as ForecastMaterial)}
+                        onChange={(e) => onConfigChange(e.target.value as ForecastMaterial, region)}
                         className="text-sm h-9 border border-input rounded-md px-3 bg-background hover:bg-accent/5 focus:ring-2 focus:ring-ring focus:border-input transition-colors cursor-pointer"
                     >
                         {MATERIALS.map((m) => (
@@ -112,14 +93,14 @@ export default function PriceTrendChart() {
                     </select>
                     <select
                         value={region}
-                        onChange={(e) => setRegion(e.target.value as ForecastRegion)}
+                        onChange={(e) => onConfigChange(material, e.target.value as ForecastRegion)}
                         className="text-sm h-9 border border-input rounded-md px-3 bg-background hover:bg-accent/5 focus:ring-2 focus:ring-ring focus:border-input transition-colors cursor-pointer"
                     >
                         {REGIONS.map((r) => (
                             <option key={r.value} value={r.value}>{r.label}</option>
                         ))}
                     </select>
-                    {forecast && lockBadge}
+                    {forecast && !loading && lockBadge}
                 </div>
             </div>
 
@@ -187,12 +168,12 @@ export default function PriceTrendChart() {
                 )}
             </div>
 
-            {forecast?.ai_analysis && (
+            {forecast?.ai_analysis && !loading && (
                 <div className="mt-4 p-4 bg-gray-50 border border-gray-100 rounded-lg">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">
                         AI Analysis
                     </p>
-                    <p className="text-sm text-gray-600 leading-relaxed font-medium">{forecast.ai_analysis}</p>
+                    <p className="text-sm text-gray-600 leading-relaxed font-medium line-clamp-3">{forecast.ai_analysis}</p>
                 </div>
             )}
         </div>

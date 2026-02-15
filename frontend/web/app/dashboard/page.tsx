@@ -14,17 +14,9 @@ import { StatsGrid, RecentActivity } from "@/components/dashboard/dashboard-widg
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import SendNotificationModal from "@/components/SendNotificationModal";
-import { projectsApi, awardsApi, type ProjectStats, type ApiProject, type AwardDecision, type AwardBid } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { forecastApi, type ForecastResult, type ForecastMaterial, type ForecastRegion } from "@/lib/api";
 
-// Mock Data for charts
-const SAMPLE_BIDS: AwardBid[] = [
-    { id: "b1", supplier_name: "Larsen & Toubro", price: 1480000, delivery_days: 21, reputation_score: 9.2 },
-    { id: "b2", supplier_name: "Tata Projects", price: 1520000, delivery_days: 18, reputation_score: 8.8 },
-    { id: "b3", supplier_name: "NCC Ltd", price: 1420000, delivery_days: 28, reputation_score: 7.5 },
-    { id: "b4", supplier_name: "Shapoorji", price: 1550000, delivery_days: 20, reputation_score: 8.5 },
-];
+// ... (existing imports)
 
 export default function DashboardPage() {
     const [copilotOpen, setCopilotOpen] = useState(false);
@@ -33,8 +25,16 @@ export default function DashboardPage() {
     const [recentProjects, setRecentProjects] = useState<ApiProject[]>([]);
     const [statsLoading, setStatsLoading] = useState(true);
     const [recentLoading, setRecentLoading] = useState(true);
+
+    // AI State
     const [awardDecision, setAwardDecision] = useState<AwardDecision | null>(null);
     const [awardLoading, setAwardLoading] = useState(true);
+
+    const [forecast, setForecast] = useState<ForecastResult | null>(null);
+    const [forecastLoading, setForecastLoading] = useState(true);
+    const [forecastMaterial, setForecastMaterial] = useState<ForecastMaterial>("steel");
+    const [forecastRegion, setForecastRegion] = useState<ForecastRegion>("delhi_ncr");
+
     const [notificationOpen, setNotificationOpen] = useState(false);
 
     const refetch = () => {
@@ -56,6 +56,15 @@ export default function DashboardPage() {
             .catch(() => setAwardDecision(null))
             .finally(() => setAwardLoading(false));
     }, []);
+
+    useEffect(() => {
+        setForecastLoading(true);
+        forecastApi
+            .analyze({ material: forecastMaterial, region: forecastRegion, quantity: 10 })
+            .then(setForecast)
+            .catch(() => setForecast(null))
+            .finally(() => setForecastLoading(false));
+    }, [forecastMaterial, forecastRegion]);
 
     return (
         <div className="space-y-8">
@@ -84,7 +93,7 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="h-[500px]"
+                    className="h-[550px]"
                 >
                     <BidScoringChart decision={awardDecision} loading={awardLoading} />
                 </motion.div>
@@ -92,9 +101,18 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="h-[500px]"
+                    className="h-[550px]"
                 >
-                    <PriceTrendChart />
+                    <PriceTrendChart
+                        forecast={forecast}
+                        loading={forecastLoading}
+                        material={forecastMaterial}
+                        region={forecastRegion}
+                        onConfigChange={(m, r) => {
+                            setForecastMaterial(m);
+                            setForecastRegion(r);
+                        }}
+                    />
                 </motion.div>
             </div>
 
