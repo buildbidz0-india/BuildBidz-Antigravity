@@ -1,68 +1,119 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState } from "react";
 import Link from "next/link";
-import { Gavel, Search, Filter, Scale } from "lucide-react";
+import { Gavel, Search, Filter, Scale, Plus, FileText, CheckCircle, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { TenderTable } from "@/components/bids/TenderTable";
+import { MOCK_TENDERS } from "@/lib/mock-tenders";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function BidsPage() {
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+
+    // Filter Logic
+    const filteredTenders = MOCK_TENDERS.filter((t) => {
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = t.title.toLowerCase().includes(q) || t.projectName.toLowerCase().includes(q);
+        const matchesStatus = statusFilter === "all" || t.status.toLowerCase() === statusFilter.toLowerCase();
+        return matchesSearch && matchesStatus;
+    });
+
+    const activeCount = MOCK_TENDERS.filter(t => t.status === "Open").length;
+    const reviewingCount = MOCK_TENDERS.filter(t => t.status === "Reviewing").length;
+    const closedCount = MOCK_TENDERS.filter(t => t.status === "Closed").length;
+
     return (
         <div className="space-y-8">
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900">Bids</h2>
-                    <p className="text-gray-500 mt-1">View and manage construction bids and tenders.</p>
+                    <h2 className="text-3xl font-bold font-heading text-foreground tracking-tight">Bid Management</h2>
+                    <p className="text-muted-foreground mt-1">Manage tenders and analyze contractor proposals with AI.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Link
-                        href="/dashboard/compare"
-                        className="flex items-center justify-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
-                    >
-                        <Scale size={20} className="mr-2" />
-                        Compare bids with AI
-                    </Link>
-                    <button className="flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all">
-                        <Gavel size={20} className="mr-2" />
-                        New Tender
-                    </button>
+                    <Button variant="outline" asChild className="hidden sm:flex">
+                        <Link href="/dashboard/compare">
+                            <Scale className="mr-2 h-4 w-4" />
+                            Compare with AI
+                        </Link>
+                    </Button>
+                    <Button size="lg" className="shadow-lg shadow-primary/20">
+                        <Plus className="mr-2 h-5 w-5" />
+                        Create Tender
+                    </Button>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">
-                        <Search size={18} />
-                    </span>
-                    <input
-                        type="text"
-                        className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 sm:text-sm"
-                        placeholder="Search bids by project or contractor..."
-                    />
-                </div>
-                <button className="flex items-center justify-center px-4 py-2.5 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 text-gray-600 transition-colors font-medium">
-                    <Filter size={18} className="mr-2" />
-                    Filter
-                </button>
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                    <CardContent className="p-6 flex items-center space-x-4">
+                        <div className="p-3 bg-green-100 text-green-700 rounded-full">
+                            <Gavel className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Active Tenders</p>
+                            <h3 className="text-2xl font-bold">{activeCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="p-6 flex items-center space-x-4">
+                        <div className="p-3 bg-orange-100 text-orange-700 rounded-full">
+                            <Clock className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Under Review</p>
+                            <h3 className="text-2xl font-bold">{reviewingCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardContent className="p-6 flex items-center space-x-4">
+                        <div className="p-3 bg-gray-100 text-gray-700 rounded-full">
+                            <CheckCircle className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-sm font-medium text-muted-foreground">Closed / Awarded</p>
+                            <h3 className="text-2xl font-bold">{closedCount}</h3>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
 
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-16 text-center"
-            >
-                <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto text-orange-600 mb-6">
-                    <Gavel size={32} />
+            {/* Filters & Actions */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-1 w-full md:w-auto gap-4">
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                        <Input
+                            placeholder="Search tenders..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 bg-white"
+                        />
+                    </div>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[160px] bg-white">
+                            <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
+                            <SelectValue placeholder="All Statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="open">Open</SelectItem>
+                            <SelectItem value="reviewing">Reviewing</SelectItem>
+                            <SelectItem value="closed">Closed</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">Bids management</h3>
-                <p className="text-gray-500 max-w-md mx-auto mb-6">
-                    Tenders and bid comparison will appear here once the bids API is connected. You can create new tenders and track contractor responses.
-                </p>
-                <Link
-                    href="/dashboard/compare"
-                    className="inline-flex items-center gap-2 text-orange-600 font-semibold hover:text-orange-700"
-                >
-                    <Scale size={18} /> Compare bids with AI
-                </Link>
-            </motion.div>
+            </div>
+
+            {/* Tenders Table */}
+            <TenderTable tenders={filteredTenders} />
         </div>
     );
 }
