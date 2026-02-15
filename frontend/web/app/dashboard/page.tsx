@@ -63,7 +63,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-bold font-heading text-foreground tracking-tight">Dashboard Overview</h2>
-                    <p className="text-muted-foreground mt-1">Welcome back. Here's your construction portfolio status today.</p>
+                    <p className="text-muted-foreground mt-1">Welcome back. Here&apos;s your construction portfolio status today.</p>
                 </div>
                 <Button
                     onClick={() => setCreateProjectOpen(true)}
