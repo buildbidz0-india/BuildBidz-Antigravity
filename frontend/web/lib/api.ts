@@ -67,3 +67,55 @@ export const aiApi = {
         return response.json();
     },
 };
+
+// -----------------------------------------------------------------------------
+// Projects API
+// -----------------------------------------------------------------------------
+
+export interface ApiProject {
+    id: number;
+    name: string;
+    location: string;
+    status: string;
+    description: string;
+    progress: number;
+    team_count?: number | null;
+    deadline?: string | null;
+    image?: string | null;
+    created_at?: string | null;
+}
+
+export const projectsApi = {
+    list: async (): Promise<ApiProject[]> => {
+        const response = await fetch(`${BACKEND_URL}/projects`);
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to list projects");
+        }
+        const data = await response.json();
+        return data.projects ?? [];
+    },
+
+    create: async (body: { name: string; location?: string; description?: string }): Promise<ApiProject> => {
+        const response = await fetch(`${BACKEND_URL}/projects`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to create project");
+        }
+        return response.json();
+    },
+
+    getById: async (id: number | string): Promise<ApiProject | null> => {
+        const response = await fetch(`${BACKEND_URL}/projects/${id}`);
+        if (response.status === 404) return null;
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to load project");
+        }
+        return response.json();
+    },
+};

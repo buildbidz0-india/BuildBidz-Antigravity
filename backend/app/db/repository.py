@@ -1,11 +1,28 @@
 import structlog
 import json
 from datetime import datetime
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 from app.db.session import get_db_pool
 from app.db.models import AgentLog, AwardDecision
 
 logger = structlog.get_logger()
+
+
+def _row_to_project(row) -> Dict[str, Any]:
+    """Map DB row to project dict."""
+    return {
+        "id": row["id"],
+        "name": row["name"],
+        "location": row["location"] or "",
+        "status": row["status"] or "Planning",
+        "description": row["description"] or "",
+        "progress": row["progress"] or 0,
+        "team_count": row["team_count"],
+        "deadline": row["deadline"],
+        "image": row["image"],
+        "created_at": row["created_at"].isoformat() if row.get("created_at") else None,
+    }
+
 
 class Repository:
     """
@@ -53,6 +70,52 @@ class Repository:
             logger.info("Award decision saved to DB", winner=winner_supplier)
         except Exception as e:
             logger.error("Failed to persist award decision", error=str(e))
+
+    # -------------------------------------------------------------------------
+    # Projects
+    # -------------------------------------------------------------------------
+
+    async def create_project(
+        self,
+        name: str,
+        location: Optional[str] = None,
+        description: Optional[str] = None,
+        status: str = "Planning",
+        progress: int = 0,
+    ) -> Dict[str, Any]:
+        pool = get_db_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO projects (name, location, description, status, progress)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, name, location, status, description, progress, team_count, deadline, image, created_at
+                """,
+                name,
+                location or "",
+                description or "",
+                status,
+                progress,
+            )
+            return _row_to_project(row)
+
+    async def list_projects(self) -> List[Dict[str, Any]]:
+        pool = get_db_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                "SELECT id, name, location, status, description, progress, team_count, deadline, image, created_at FROM projects ORDER BY created_at DESC"
+            )
+            return [_row_to_project(r) for r in rows]
+
+    async def get_project_by_id(self, project_id: int) -> Optional[Dict[str, Any]]:
+        pool = get_db_pool()
+        async with pool.acquire() as conn:
+            row = await conn.fetchrow(
+                "SELECT id, name, location, status, description, progress, team_count, deadline, image, created_at FROM projects WHERE id = $1",
+                project_id,
+            )
+            return _row_to_project(row) if row else None
+
 
 # Global instance
 repo = Repository()

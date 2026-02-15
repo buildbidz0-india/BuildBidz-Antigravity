@@ -13,18 +13,77 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Sparkles } from "lucide-react";
 import AIChat from "@/components/AIChat";
 import IngestPanel from "@/components/IngestPanel";
 import { getProjectById } from "@/lib/mock-projects";
+import { projectsApi } from "@/lib/api";
+import type { ProjectDetail } from "@/lib/mock-projects";
+
+/** Normalize API or mock project to a shape the UI can render (with team + milestones). */
+function toDetailShape(p: { id: number; name: string; location: string; status: string; progress: number; description: string; team?: ProjectDetail["team"]; milestones?: ProjectDetail["milestones"] }): ProjectDetail {
+    return {
+        id: p.id,
+        name: p.name,
+        location: p.location,
+        status: p.status,
+        progress: p.progress,
+        description: p.description,
+        team: p.team ?? [],
+        milestones: p.milestones ?? [],
+    };
+}
 
 export default function ProjectDetailPage() {
     const { id } = useParams();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Updates");
+    const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
+    const [loading, setLoading] = useState(true);
 
-    const projectData = getProjectById(id);
+    useEffect(() => {
+        let cancelled = false;
+        const numId = typeof id === "string" ? parseInt(id, 10) : NaN;
+        if (!id || Number.isNaN(numId)) {
+            const mock = getProjectById(id);
+            setProjectData(mock ? toDetailShape(mock) : null);
+            setLoading(false);
+            return;
+        }
+        (async () => {
+            try {
+                const apiProject = await projectsApi.getById(id);
+                if (cancelled) return;
+                if (apiProject) {
+                    setProjectData(toDetailShape({
+                        ...apiProject,
+                        team: [],
+                        milestones: [],
+                    }));
+                } else {
+                    const mock = getProjectById(id);
+                    setProjectData(mock ? toDetailShape(mock) : null);
+                }
+            } catch {
+                if (cancelled) return;
+                const mock = getProjectById(id);
+                setProjectData(mock ? toDetailShape(mock) : null);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="space-y-8">
+                <div className="h-8 w-48 bg-gray-100 rounded animate-pulse" />
+                <div className="h-64 bg-gray-100 rounded-2xl animate-pulse" />
+            </div>
+        );
+    }
 
     if (!projectData) {
         return (

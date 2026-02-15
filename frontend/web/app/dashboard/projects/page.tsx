@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -15,9 +15,33 @@ import {
 } from "lucide-react";
 import { MOCK_PROJECTS } from "@/lib/mock-projects";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import { projectsApi, type ApiProject } from "@/lib/api";
+
+const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?auto=format&fit=crop&q=80&w=400";
 
 export default function ProjectsPage() {
     const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [projects, setProjects] = useState<ApiProject[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchProjects = useCallback(async () => {
+        setLoading(true);
+        try {
+            const list = await projectsApi.list();
+            setProjects(list);
+        } catch {
+            setProjects(MOCK_PROJECTS as unknown as ApiProject[]);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
+
+    const displayList = projects.length > 0 ? projects : (MOCK_PROJECTS as unknown as ApiProject[]);
+
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -53,8 +77,22 @@ export default function ProjectsPage() {
             </div>
 
             {/* Projects Grid */}
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm h-80 animate-pulse">
+                            <div className="h-48 bg-gray-100" />
+                            <div className="p-6 space-y-3">
+                                <div className="h-5 bg-gray-100 rounded w-3/4" />
+                                <div className="h-4 bg-gray-100 rounded w-1/2" />
+                                <div className="h-2 bg-gray-100 rounded w-full" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {MOCK_PROJECTS.map((project, index) => (
+                {displayList.map((project, index) => (
                     <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -62,9 +100,9 @@ export default function ProjectsPage() {
                         transition={{ delay: index * 0.1 }}
                         className="group bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer"
                     >
-                        <div className="h-48 overflow-hidden relative">
+                        <div className="h-48 overflow-hidden relative bg-gray-100">
                             <Image
-                                src={project.image}
+                                src={project.image || DEFAULT_IMAGE}
                                 alt={project.name}
                                 fill
                                 className="object-cover group-hover:scale-110 transition-transform duration-500"
@@ -106,11 +144,11 @@ export default function ProjectsPage() {
                             <div className="mt-6 pt-6 border-t border-gray-50 grid grid-cols-2 gap-4">
                                 <div className="flex items-center text-xs text-gray-500">
                                     <Calendar size={14} className="mr-2 text-gray-400" />
-                                    {project.deadline}
+                                    {project.deadline ?? "—"}
                                 </div>
                                 <div className="flex items-center text-xs text-gray-500">
                                     <Users size={14} className="mr-2 text-gray-400" />
-                                    {project.teamCount ?? project.team.length} members
+                                    {project.team_count ?? 0} members
                                 </div>
                             </div>
                         </div>
@@ -118,9 +156,11 @@ export default function ProjectsPage() {
                     </Link>
                 ))}
             </div>
+            )}
             <CreateProjectModal
                 isOpen={createModalOpen}
                 onClose={() => setCreateModalOpen(false)}
+                onSuccess={fetchProjects}
             />
         </div>
     );

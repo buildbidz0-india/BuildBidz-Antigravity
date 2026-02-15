@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Construction } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { projectsApi } from "@/lib/api";
 
 interface CreateProjectModalProps {
     isOpen: boolean;
@@ -22,16 +23,15 @@ export default function CreateProjectModal({ isOpen, onClose, onSuccess }: Creat
         if (!name.trim()) return;
         setIsSubmitting(true);
         try {
-            // TODO: call projects API when available
-            await new Promise((r) => setTimeout(r, 600));
-            toast.success("Project creation will be available when the API is connected.");
+            await projectsApi.create({ name: name.trim(), location: location.trim() || undefined, description: description.trim() || undefined });
+            toast.success("Project created.");
             setName("");
             setLocation("");
             setDescription("");
             onClose();
             onSuccess?.();
-        } catch {
-            toast.error("Something went wrong.");
+        } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Something went wrong.");
         } finally {
             setIsSubmitting(false);
         }

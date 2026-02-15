@@ -49,6 +49,24 @@ async def init_tables():
             );
             CREATE INDEX IF NOT EXISTS idx_award_decisions_timestamp ON award_decisions(timestamp);
         """)
+
+        # Projects
+        print("Creating projects table...")
+        await conn.execute("""
+            CREATE TABLE IF NOT EXISTS projects (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR NOT NULL,
+                location VARCHAR,
+                status VARCHAR DEFAULT 'Planning',
+                description TEXT,
+                progress INTEGER DEFAULT 0,
+                team_count INTEGER,
+                deadline VARCHAR,
+                image VARCHAR,
+                created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT (NOW() AT TIME ZONE 'utc')
+            );
+            CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+        """)
         
     print("Tables initialized successfully.")
     await close_db()
