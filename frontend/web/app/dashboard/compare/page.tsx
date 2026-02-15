@@ -187,7 +187,7 @@ export default function ComparePage() {
                     <div className="p-6 border-b border-gray-100 bg-green-50 flex items-center gap-3">
                         <CheckCircle2 className="text-green-600" size={24} />
                         <div>
-                            <p className="font-bold text-gray-900">Recommended: {decision.rankings?.find((r: { supplier?: string; total_score?: number }) => r.total_score === decision.score)?.supplier ?? decision.recommended_bid_id}</p>
+                            <p className="font-bold text-gray-900">Recommended: {validBids.find((b) => b.id === decision.recommended_bid_id)?.supplier_name ?? decision.rankings?.[0]?.supplier ?? decision.recommended_bid_id}</p>
                             <p className="text-sm text-gray-600">Score: {decision.score.toFixed(1)}</p>
                         </div>
                     </div>

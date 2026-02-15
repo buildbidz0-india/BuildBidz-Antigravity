@@ -6,11 +6,11 @@ import {
     LayoutDashboard,
     Construction,
     Gavel,
+    Scale,
     Settings,
     LogOut,
     ChevronLeft,
     ChevronRight,
-    Menu
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
@@ -20,6 +20,7 @@ const navItems = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Projects", href: "/dashboard/projects", icon: Construction },
     { name: "Bids", href: "/dashboard/bids", icon: Gavel },
+    { name: "Compare", href: "/dashboard/compare", icon: Scale },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
