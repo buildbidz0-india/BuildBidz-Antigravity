@@ -3,8 +3,14 @@
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, User, Loader2, X, Sparkles, MessageSquare } from "lucide-react";
-import { aiApi, ChatMessage } from "@/lib/api";
+import { aiApi, awardsApi, forecastApi, ChatMessage, type AwardBid } from "@/lib/api";
 import { cn } from "@/lib/utils";
+
+const SAMPLE_BIDS: AwardBid[] = [
+    { id: "c1", supplier_name: "L&T", price: 1480000, delivery_days: 21, reputation_score: 9.2 },
+    { id: "c2", supplier_name: "Tata Projects", price: 1520000, delivery_days: 18, reputation_score: 8.8 },
+    { id: "c3", supplier_name: "NCC", price: 1420000, delivery_days: 28, reputation_score: 7.5 },
+];
 
 interface AIChatProps {
     projectId: string;
@@ -50,6 +56,36 @@ export default function AIChat({ projectId, isOpen, onClose }: AIChatProps) {
         }
     };
 
+    const runQuickAction = async (label: string, fn: () => Promise<string>) => {
+        setMessages((prev) => [...prev, { role: "user", content: label }]);
+        setIsLoading(true);
+        try {
+            const content = await fn();
+            setMessages((prev) => [...prev, { role: "assistant", content }]);
+        } catch (e) {
+            setMessages((prev) => [
+                ...prev,
+                { role: "assistant", content: `Error: ${e instanceof Error ? e.message : "Request failed"}.` },
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCompareBids = () =>
+        runQuickAction("Compare sample bids", async () => {
+            const d = await awardsApi.compare("TMT Steel supply", SAMPLE_BIDS);
+            const winner = d.rankings?.[0] as { supplier?: string } | undefined;
+            return `**Bid comparison result**\n\nRecommended: **${winner?.supplier ?? d.recommended_bid_id}** (score: ${d.score.toFixed(1)})\n\n**AI Justification:**\n${d.justification}`;
+        });
+
+    const handleForecast = () =>
+        runQuickAction("Steel price forecast", async () => {
+            const f = await forecastApi.analyze({ material: "steel", region: "delhi_ncr", quantity: 10 });
+            const rec = f.lock_rate_recommendation ? "**LOCK** (recommended)" : "**WAIT**";
+            return `**Steel (TMT) forecast – Delhi NCR**\n\nTrend: ${f.trend_direction}\nCurrent: ₹${f.current_price.toLocaleString()}/Ton\n30-day forecast: ₹${f.forecast_price_30d.toLocaleString()}\n\nRecommendation: ${rec}\n\n**AI Analysis:**\n${f.ai_analysis}`;
+        });
+
     return (
         <AnimatePresence>
             {isOpen && (
@@ -91,8 +127,26 @@ export default function AIChat({ projectId, isOpen, onClose }: AIChatProps) {
                                 <div>
                                     <h4 className="font-bold text-gray-900">How can I help today?</h4>
                                     <p className="text-gray-500 text-sm mt-1">
-                                        Ask me anything about your project drawings, site updates, or safety protocols.
+                                        Ask me anything, or use a quick action below.
                                     </p>
+                                </div>
+                                <div className="flex flex-col gap-2 w-full">
+                                    <button
+                                        type="button"
+                                        onClick={handleCompareBids}
+                                        disabled={isLoading}
+                                        className="w-full py-2.5 px-4 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-xl text-sm font-medium border border-orange-100 disabled:opacity-50"
+                                    >
+                                        Compare sample bids
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleForecast}
+                                        disabled={isLoading}
+                                        className="w-full py-2.5 px-4 bg-gray-50 hover:bg-gray-100 text-gray-700 rounded-xl text-sm font-medium border border-gray-200 disabled:opacity-50"
+                                    >
+                                        Steel price forecast
+                                    </button>
                                 </div>
                             </div>
                         )}

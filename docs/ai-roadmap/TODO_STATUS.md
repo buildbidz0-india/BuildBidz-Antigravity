@@ -11,12 +11,12 @@
 | Area | Done | Remaining |
 |------|------|-----------|
 | **Backend: 5-model foundation** | ✅ Phases 1–6 | Phase 8 (testing/launch) |
-| **Backend: APIs** | ✅ Award, Forecast, Coordination, AI health | — |
-| **Frontend: AI UI** | ✅ Charts (mock), Copilot (RAG chat) | Wire to real APIs; comparison & justification UI |
-| **Frontend: Full flows** | — | Market comparison page, voice input |
+| **Backend: APIs** | ✅ Award, Forecast, Coordination, Extract, Transcribe, AI health | — |
+| **Frontend: AI UI** | ✅ Charts wired to APIs, Copilot + quick actions, justification UI | — |
+| **Frontend: Full flows** | ✅ Compare page, Coordination modal, Extract page, Voice page | — |
 | **Reliability** | ✅ Router + circuit breaker | On-device fallback (deferred) |
 
-**Overall:** Backend roadmap is ~90% complete. Frontend integration with the new AI endpoints is ~20% complete (UI shell exists; data is mock).
+**Overall:** Backend and frontend AI roadmap tasks are implemented. Remaining: Phase 8 (E2E tests, load tests), on-device fallback (deferred).
 
 ---
 
@@ -59,7 +59,10 @@
 
 ---
 
-## 🔲 REMAINING — To-Do List
+## ✅ COMPLETED (2026-02-15)
+- Items 1–10 from the list below are implemented (APIs wired, Compare/Extract/Voice pages, Coordination modal, Copilot quick actions, README).
+
+## 🔲 REMAINING — To-Do List (all items above done; optional follow-ups)
 
 ### High priority (frontend: wire AI backend to UI)
 

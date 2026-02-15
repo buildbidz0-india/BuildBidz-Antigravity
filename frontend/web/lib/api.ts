@@ -215,7 +215,8 @@ export interface AwardDecision {
     recommended_bid_id: string;
     score: number;
     justification: string;
-    rankings: Array<{ bid_id: string; supplier_name?: string; score: number; [k: string]: unknown }>;
+    /** Backend returns { rank, supplier, total_score, breakdown }; we allow both shapes */
+    rankings: Array<Record<string, unknown> & { supplier?: string; total_score?: number; score?: number }>;
     meta?: Record<string, unknown>;
 }
 
@@ -350,6 +351,74 @@ export const coordinationApi = {
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.detail || "Coordination failed");
+        }
+        return response.json();
+    },
+};
+
+// -----------------------------------------------------------------------------
+// Extract API (Magic Extractor)
+// -----------------------------------------------------------------------------
+
+export interface ExtractLineItem {
+    description: string;
+    quantity?: number;
+    unit?: string;
+    unit_price?: number;
+    total_price?: number;
+}
+
+export interface ExtractResult {
+    document_type: string;
+    vendor_name?: string;
+    invoice_number?: string;
+    invoice_date?: string;
+    gstin?: string;
+    pan?: string;
+    total_amount?: number;
+    line_items: ExtractLineItem[];
+    verification_ready: boolean;
+}
+
+export const extractApi = {
+    extract: async (ocrText: string): Promise<ExtractResult> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/extract/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify({ ocr_text: ocrText }),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Extraction failed");
+        }
+        return response.json();
+    },
+};
+
+// -----------------------------------------------------------------------------
+// Transcribe API (Field Voice / ASR)
+// -----------------------------------------------------------------------------
+
+export interface TranscribeResult {
+    text: string;
+    language?: string;
+    provider?: string;
+}
+
+export const transcribeApi = {
+    transcribe: async (audioFile: File): Promise<TranscribeResult> => {
+        const authHeaders = await getAuthHeaders();
+        const form = new FormData();
+        form.append("file", audioFile);
+        const response = await fetch(`${BACKEND_URL}/transcribe/`, {
+            method: "POST",
+            headers: { ...authHeaders },
+            body: form,
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Transcription failed");
         }
         return response.json();
     },

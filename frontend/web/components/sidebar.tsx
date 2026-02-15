@@ -7,6 +7,8 @@ import {
     Construction,
     Gavel,
     Scale,
+    FileText,
+    Mic,
     Settings,
     LogOut,
     ChevronLeft,
@@ -21,6 +23,8 @@ const navItems = [
     { name: "Projects", href: "/dashboard/projects", icon: Construction },
     { name: "Bids", href: "/dashboard/bids", icon: Gavel },
     { name: "Compare", href: "/dashboard/compare", icon: Scale },
+    { name: "Extract", href: "/dashboard/extract", icon: FileText },
+    { name: "Voice", href: "/dashboard/voice", icon: Mic },
     { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 

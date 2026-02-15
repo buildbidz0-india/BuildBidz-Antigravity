@@ -187,7 +187,7 @@ export default function ComparePage() {
                     <div className="p-6 border-b border-gray-100 bg-green-50 flex items-center gap-3">
                         <CheckCircle2 className="text-green-600" size={24} />
                         <div>
-                            <p className="font-bold text-gray-900">Recommended: {validBids.find((b) => b.id === decision.recommended_bid_id)?.supplier_name ?? decision.rankings?.[0]?.supplier ?? decision.recommended_bid_id}</p>
+                            <p className="font-bold text-gray-900">Recommended: {String(validBids.find((b) => b.id === decision.recommended_bid_id)?.supplier_name ?? (decision.rankings?.[0] as { supplier?: string } | undefined)?.supplier ?? decision.recommended_bid_id)}</p>
                             <p className="text-sm text-gray-600">Score: {decision.score.toFixed(1)}</p>
                         </div>
                     </div>
@@ -202,13 +202,16 @@ export default function ComparePage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {decision.rankings?.map((r: { rank?: number; supplier?: string; total_score?: number }, i: number) => (
-                                    <tr key={i} className="border-b border-gray-50">
-                                        <td className="py-2">{r.rank ?? i + 1}</td>
-                                        <td className="py-2">{r.supplier ?? "—"}</td>
-                                        <td className="py-2">{Number(r.total_score ?? 0).toFixed(1)}</td>
-                                    </tr>
-                                ))}
+                                {(decision.rankings ?? []).map((r, i) => {
+                                    const row = r as { rank?: number; supplier?: string; total_score?: number };
+                                    return (
+                                        <tr key={i} className="border-b border-gray-50">
+                                            <td className="py-2">{row.rank ?? i + 1}</td>
+                                            <td className="py-2">{row.supplier ?? "—"}</td>
+                                            <td className="py-2">{Number(row.total_score ?? 0).toFixed(1)}</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                         <div className="mt-6 p-4 bg-orange-50 border border-orange-100 rounded-xl">

@@ -15,6 +15,7 @@ import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
+import SendNotificationModal from "@/components/SendNotificationModal";
 import { projectsApi, awardsApi, type ProjectStats, type ApiProject, type AwardDecision, type AwardBid } from "@/lib/api";
 
 const SAMPLE_BIDS: AwardBid[] = [
@@ -55,6 +56,7 @@ export default function DashboardPage() {
     const [recentLoading, setRecentLoading] = useState(true);
     const [awardDecision, setAwardDecision] = useState<AwardDecision | null>(null);
     const [awardLoading, setAwardLoading] = useState(true);
+    const [notificationOpen, setNotificationOpen] = useState(false);
 
     const refetch = () => {
         setStatsLoading(true);
@@ -231,6 +233,12 @@ export default function DashboardPage() {
                         >
                             Analyze Market
                         </button>
+                        <button
+                            onClick={() => setNotificationOpen(true)}
+                            className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm"
+                        >
+                            Send notification
+                        </button>
                     </div>
                     <div className="absolute -bottom-4 -right-4 opacity-10">
                         <Construction size={160} />
@@ -246,6 +254,10 @@ export default function DashboardPage() {
             <CreateProjectModal
                 isOpen={createProjectOpen}
                 onClose={() => setCreateProjectOpen(false)}
+            />
+            <SendNotificationModal
+                isOpen={notificationOpen}
+                onClose={() => setNotificationOpen(false)}
             />
         </div>
     );

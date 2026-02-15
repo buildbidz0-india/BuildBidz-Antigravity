@@ -71,8 +71,10 @@ An end-to-end construction platform for the Indian market featuring bidding, pro
 ### AI Integration (Groq)
 
 BuildBidz uses Groq for high-speed LLM inference. To configure:
-1. Add `GROQ_API_KEY` to your `.env` file.
+1. Add `GROQ_API_KEY` (or `GROQ_API_KEYS` for rotation) to your `.env` file.
 2. (Optional) Set `GROQ_MODEL` (default: `llama3-70b-8192`).
+
+**AI Roadmap (multi-model):** Compare & Award, Price Forecast, Coordination, Magic Extractor, and Field Voice (ASR) use the model router. See `docs/ai-roadmap/01_IMPLEMENTATION_PLAN.md` for optional env vars (`GROQ_MODEL_AWARD`, `GROQ_MODEL_FORECAST`, `CIRCUIT_BREAKER_*`, etc.) and `docs/ai-roadmap/TODO_STATUS.md` for status.
 
 Test the integration:
 ```bash

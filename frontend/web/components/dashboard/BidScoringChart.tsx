@@ -17,10 +17,10 @@ interface BidScoringChartProps {
 
 export default function BidScoringChart({ decision, loading }: BidScoringChartProps) {
     const data =
-        decision?.rankings?.map((r: { supplier?: string; total_score?: number; breakdown?: { price?: number } }) => ({
-            name: r.supplier ?? "",
+        decision?.rankings?.map((r) => ({
+            name: (r.supplier as string | undefined) ?? "",
             score: Number(r.total_score ?? r.score ?? 0),
-            price: r.breakdown?.price ?? undefined,
+            price: (r.breakdown as { price?: number } | undefined)?.price ?? undefined,
         })) ?? FALLBACK_DATA;
 
     const chartData = data.map((d) => ({
