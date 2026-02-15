@@ -13,7 +13,21 @@ import {
     Area,
     AreaChart,
 } from "recharts";
-import { forecastApi, type ForecastResult } from "@/lib/api";
+import { forecastApi, type ForecastResult, type ForecastMaterial, type ForecastRegion } from "@/lib/api";
+
+const MATERIALS: { value: ForecastMaterial; label: string }[] = [
+    { value: "steel", label: "Steel (TMT)" },
+    { value: "cement", label: "Cement" },
+    { value: "sand", label: "Sand" },
+    { value: "tiles", label: "Tiles" },
+    { value: "fittings", label: "Fittings" },
+];
+const REGIONS: { value: ForecastRegion; label: string }[] = [
+    { value: "delhi_ncr", label: "Delhi NCR" },
+    { value: "patna", label: "Patna" },
+    { value: "lucknow", label: "Lucknow" },
+    { value: "indore", label: "Indore" },
+];
 
 function formatDateLabel(dateStr: string): string {
     const d = new Date(dateStr);
@@ -21,17 +35,19 @@ function formatDateLabel(dateStr: string): string {
 }
 
 export default function PriceTrendChart() {
+    const [material, setMaterial] = useState<ForecastMaterial>("steel");
+    const [region, setRegion] = useState<ForecastRegion>("delhi_ncr");
     const [forecast, setForecast] = useState<ForecastResult | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         setLoading(true);
         forecastApi
-            .analyze({ material: "steel", region: "delhi_ncr", quantity: 10 })
+            .analyze({ material, region, quantity: 10 })
             .then(setForecast)
             .catch(() => setForecast(null))
             .finally(() => setLoading(false));
-    }, []);
+    }, [material, region]);
 
     const baseData =
         forecast?.historical_data?.map((p) => ({
@@ -56,8 +72,8 @@ export default function PriceTrendChart() {
             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full">
                 <div className="mb-6 flex justify-between items-start">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-900">Steel Price Forecast (TMT)</h3>
-                        <p className="text-sm text-gray-500">6-month trend analysis & AI prediction</p>
+                        <h3 className="text-lg font-bold text-gray-900">Price Forecast</h3>
+                        <p className="text-sm text-gray-500">Trend analysis & AI lock recommendation</p>
                     </div>
                 </div>
                 <div className="h-[300px] flex items-center justify-center">

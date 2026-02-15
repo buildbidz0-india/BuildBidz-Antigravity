@@ -12,3 +12,14 @@ class AppException(Exception):
         self.status_code = status_code
         self.details = details or {}
         super().__init__(message)
+
+
+class UnauthorizedError(AppException):
+    """Raised when the request is not authenticated or token is invalid."""
+    def __init__(self, message: str = "Unauthorized", details: dict = None):
+        super().__init__(
+            message=message,
+            error_code="UNAUTHORIZED",
+            status_code=401,
+            details=details or {},
+        )
