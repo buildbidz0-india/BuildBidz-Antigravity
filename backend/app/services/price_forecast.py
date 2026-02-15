@@ -15,6 +15,7 @@ import structlog
 import random  # For mock data generation until real API source is connected
 
 from app.services.ai import groq_service
+from app.services.market_data import market_data_service
 
 logger = structlog.get_logger()
 
@@ -65,87 +66,43 @@ class PriceForecastService:
     """
     Core logic for the 'Quantitative Analyst' phase.
     
-    1. Market Data Ingestion: Fetches current and historical prices (Mocked for now).
-    2. Trend Analysis: Mathematical projection of price movement.
-    3. AI Reasoning: Uses DeepSeek-R1 70B to generate "Lock Rate" advice based 
-       on supply chain variables and margin protection goals.
+    1. Market Data Ingestion: Fetches real/simulated data from MarketDataService.
+    2. Trend Analysis: Uses the detected trend from MarketDataService.
+    3. AI Reasoning: Uses DeepSeek-R1 70B to generate "Lock Rate" advice.
     """
-
-    def _get_mock_market_data(self, material: MaterialType, region: Region) -> Dict[str, Any]:
-        """
-        Generates realistic mock data for Indian construction materials until
-        a real API source is integrated.
-        """
-        base_prices = {
-            MaterialType.STEEL: 55000,  # Per Ton
-            MaterialType.CEMENT: 380,   # Per Bag
-            MaterialType.SAND: 1200,    # Per CFT
-            MaterialType.TILES: 45,     # Per Sqft
-            MaterialType.FITTINGS: 1500 # Per Unit avg
-        }
-        
-        units = {
-            MaterialType.STEEL: "INR/Ton",
-            MaterialType.CEMENT: "INR/Bag",
-            MaterialType.SAND: "INR/CFT",
-            MaterialType.TILES: "INR/Sqft",
-            MaterialType.FITTINGS: "INR/Unit"
-        }
-        
-        base = base_prices.get(material, 1000)
-        
-        # Generate 30 days of history with some random volatility
-        history = []
-        today = datetime.now()
-        current_price = base
-        
-        # Trend simulation
-        trend = random.choice([-0.05, 0.02, 0.08]) # Down 5%, Up 2%, Up 8%
-        
-        for i in range(30, -1, -1):
-            date_str = (today - timedelta(days=i)).strftime("%Y-%m-%d")
-            # Sine wave + random noise + trend
-            noise = random.uniform(-0.02, 0.02)
-            day_factor = 1 + (trend * (30-i)/30) + noise
-            price = base * day_factor
-            
-            history.append(PricePoint(
-                date=date_str,
-                price=round(price, 2),
-                unit=units[material]
-            ))
-            
-            if i == 0:
-                current_price = price
-
-        return {
-            "current_price": round(current_price, 2),
-            "history": history,
-            "unit": units[material],
-            "detected_trend": "UP" if trend > 0 else "DOWN" if trend < -0.02 else "STABLE"
-        }
 
     async def generate_forecast(self, request: ForecastRequest) -> ForecastResult:
         """
         Generate a price forecast and lock-rate recommendation.
         """
-        # 1. Get Market Data
-        data = self._get_mock_market_data(request.material, request.region)
-        current_price = data["current_price"]
-        trend = data["detected_trend"]
-        history = data["history"]
+        # 1. Get Market Data (Deterministic/Real)
+        # Note: We fetch more days (60) to give the chart more context, but AI uses last 30
+        market_data = market_data_service.get_price_history(
+            request.material.value, 
+            request.region.value, 
+            days=30
+        )
         
-        # 2. Mathematical Projection (Simple Linear Regression for now)
-        # In a real system, this would use Prophet or ARIMA
+        current_price = market_data["current_price"]
+        trend = market_data["trend"]
+        
+        # Convert dict items to PricePoint objects
+        history = [
+            PricePoint(date=p.date, price=p.price, unit=p.unit) 
+            for p in market_data["history"]
+        ]
+        
+        # 2. Mathematical Projection
+        # Simple projection based on the 7-day trend identified by MarketDataService
+        # If trend is STABLE, we assume minimal drift.
         if trend == "UP":
             projected_price = current_price * 1.05  # +5%
         elif trend == "DOWN":
             projected_price = current_price * 0.95  # -5%
         else:
-            projected_price = current_price
+            projected_price = current_price * 1.01  # +1% inflation bias
             
         # 3. AI Analysis (DeepSeek-R1 70B via Router)
-        # We prompt the AI to act as a Quantitative Analyst
         
         history_summary = "\n".join([f"{p.date}: {p.price}" for p in history[-7:]]) # Last 7 days
         
@@ -156,8 +113,8 @@ class PriceForecastService:
         Target Margin to Protect: {request.target_margin_percent}%
         
         Current Market Data:
-        - Current Price: {current_price} {data['unit']}
-        - 30-Day Trend: {trend}
+        - Current Price: {current_price} {market_data['unit']}
+        - Trend Direction (7-day): {trend}
         - Recent History (Last 7 Days):
         {history_summary}
         
@@ -168,7 +125,7 @@ class PriceForecastService:
         
         Output:
         Provide a concise, data-driven analysis (max 3 sentences) explaining your recommendation.
-        Focus on supply chain variables (seasonal demand, logistics).
+        Focus on supply chain variables (seasonal demand, logistics) that might explain this trend.
         """
         
         messages = [{"role": "user", "content": prompt_content}]
@@ -184,6 +141,7 @@ class PriceForecastService:
         # 4. Determine Recommendation
         # Logic: If trend is UP and AI says Lock -> Lock
         # If trend is DOWN -> Wait
+        # If STABLE -> Wait (usually)
         should_lock = (trend == "UP")
         
         return ForecastResult(

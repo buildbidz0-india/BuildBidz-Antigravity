@@ -24,11 +24,11 @@ async function fetchWithRetry(
     baseDelay: number = 1000
 ): Promise<Response> {
     let lastError: Error | null = null;
-    
+
     for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
             const response = await fetch(url, options);
-            
+
             // Retry on 5xx or 429 (rate limit)
             if (response.status >= 500 || response.status === 429) {
                 if (attempt < maxRetries) {
@@ -37,7 +37,7 @@ async function fetchWithRetry(
                     continue;
                 }
             }
-            
+
             return response;
         } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
@@ -47,7 +47,7 @@ async function fetchWithRetry(
             }
         }
     }
-    
+
     throw lastError || new Error("Request failed after retries");
 }
 
@@ -284,7 +284,7 @@ export const awardsApi = {
         requirementDescription: string,
         bids: AwardBid[],
         criteria?: AwardCriteriaInput
-    ): Promise<{ ranked_bids: Array<{ bid_id: string; score: number; [k: string]: unknown }> }> => {
+    ): Promise<{ ranked_bids: Array<{ bid_id: string; score: number;[k: string]: unknown }> }> => {
         const authHeaders = await getAuthHeaders();
         const response = await fetch(`${BACKEND_URL}/awards/score-only`, {
             method: "POST",
@@ -460,4 +460,83 @@ export const transcribeApi = {
         }
         return response.json();
     },
+
+    // -----------------------------------------------------------------------------
+    // Bids API (Tender Management)
+    // -----------------------------------------------------------------------------
+
+    export interface ApiTender {
+        id: number;
+title: string;
+project_id ?: number;
+description: string;
+status: string;
+deadline ?: string;
+min_budget: number;
+max_budget: number;
+bid_count: number;
+created_at ?: string;
+}
+
+export interface ApiBid {
+    id: number;
+    tender_id: number;
+    contractor_name: string;
+    amount: number;
+    status: string;
+    submitted_at?: string;
+}
+
+export const bidsApi = {
+    list: async (): Promise<ApiTender[]> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetchWithRetry(`${BACKEND_URL}/bids`, {
+            headers: { "Content-Type": "application/json", ...authHeaders },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || `Failed to list tenders (${response.status})`);
+        }
+        return response.json();
+    },
+
+    create: async (body: { title: string; min_budget: number; max_budget: number; deadline: string; description?: string }): Promise<ApiTender> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/bids`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to create tender");
+        }
+        return response.json();
+    },
+
+    getById: async (id: number): Promise<ApiTender> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetchWithRetry(`${BACKEND_URL}/bids/${id}`, {
+            headers: { ...authHeaders },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to load tender");
+        }
+        return response.json();
+    },
+
+    submitBid: async (tenderId: number, body: { contractor_name: string; amount: number }): Promise<ApiBid> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/bids/${tenderId}/submit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to submit bid");
+        }
+        return response.json();
+    }
 };

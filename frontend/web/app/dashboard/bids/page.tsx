@@ -1,30 +1,69 @@
 "use client";
 
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Gavel, Search, Filter, Scale, Plus, FileText, CheckCircle, Clock } from "lucide-react";
+import { Gavel, Search, Filter, Scale, Plus, FileText, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { TenderTable } from "@/components/bids/TenderTable";
-import { MOCK_TENDERS } from "@/lib/mock-tenders";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { bidsApi, type ApiTender } from "@/lib/api";
+import { useToast } from "@/components/ui/use-toast";
+
+// Helper to map API data to UI shape
+const mapTenderToUI = (t: ApiTender) => ({
+    id: t.id.toString(),
+    title: t.title,
+    project_id: t.project_id?.toString() || "",
+    projectName: t.project_id ? `Project #${t.project_id}` : "General",
+    description: t.description,
+    status: t.status,
+    bidsReceived: t.bid_count,
+    deadline: t.deadline ? new Date(t.deadline).toLocaleDateString() : "No Deadline",
+    budgetRange: `₹${t.min_budget.toLocaleString()} - ₹${t.max_budget.toLocaleString()}`
+});
 
 export default function BidsPage() {
+    const { toast } = useToast();
+    const [tenders, setTenders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
 
+    useEffect(() => {
+        loadTenders();
+    }, []);
+
+    const loadTenders = async () => {
+        try {
+            setLoading(true);
+            const data = await bidsApi.list();
+            setTenders(data.map(mapTenderToUI));
+        } catch (error) {
+            console.error("Failed to load tenders", error);
+            toast({
+                title: "Error",
+                description: "Failed to load tenders. Ensure backend is running.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Filter Logic
-    const filteredTenders = MOCK_TENDERS.filter((t) => {
+    const filteredTenders = tenders.filter((t) => {
         const q = searchQuery.toLowerCase();
         const matchesSearch = t.title.toLowerCase().includes(q) || t.projectName.toLowerCase().includes(q);
         const matchesStatus = statusFilter === "all" || t.status.toLowerCase() === statusFilter.toLowerCase();
         return matchesSearch && matchesStatus;
     });
 
-    const activeCount = MOCK_TENDERS.filter(t => t.status === "Open").length;
-    const reviewingCount = MOCK_TENDERS.filter(t => t.status === "Reviewing").length;
-    const closedCount = MOCK_TENDERS.filter(t => t.status === "Closed").length;
+    const activeCount = tenders.filter(t => t.status === "Open").length;
+    const reviewingCount = tenders.filter(t => t.status === "Reviewing").length;
+    const closedCount = tenders.filter(t => t.status === "Closed").length;
 
     return (
         <div className="space-y-8">
@@ -57,7 +96,7 @@ export default function BidsPage() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Active Tenders</p>
-                            <h3 className="text-2xl font-bold">{activeCount}</h3>
+                            <h3 className="text-2xl font-bold">{loading ? "..." : activeCount}</h3>
                         </div>
                     </CardContent>
                 </Card>
@@ -68,7 +107,7 @@ export default function BidsPage() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Under Review</p>
-                            <h3 className="text-2xl font-bold">{reviewingCount}</h3>
+                            <h3 className="text-2xl font-bold">{loading ? "..." : reviewingCount}</h3>
                         </div>
                     </CardContent>
                 </Card>
@@ -79,7 +118,7 @@ export default function BidsPage() {
                         </div>
                         <div>
                             <p className="text-sm font-medium text-muted-foreground">Closed / Awarded</p>
-                            <h3 className="text-2xl font-bold">{closedCount}</h3>
+                            <h3 className="text-2xl font-bold">{loading ? "..." : closedCount}</h3>
                         </div>
                     </CardContent>
                 </Card>
@@ -110,10 +149,22 @@ export default function BidsPage() {
                         </SelectContent>
                     </Select>
                 </div>
+
+                <Button variant="ghost" onClick={loadTenders} disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Clock className="h-4 w-4 mr-2" />}
+                    Refresh
+                </Button>
             </div>
 
             {/* Tenders Table */}
-            <TenderTable tenders={filteredTenders} />
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            ) : (
+                <TenderTable tenders={filteredTenders} />
+            )}
         </div>
     );
 }
+

@@ -47,6 +47,7 @@ export default function RootLayout() {
 }
 
 import { AuthProvider } from '@/contexts/AuthContext';
+import { SyncProvider } from '@/contexts/SyncContext';
 
 // ... imports
 
@@ -55,12 +56,14 @@ function RootLayoutNav() {
 
   return (
     <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-        </Stack>
-      </ThemeProvider>
+      <SyncProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+          </Stack>
+        </ThemeProvider>
+      </SyncProvider>
     </AuthProvider>
   );
 }
