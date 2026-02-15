@@ -7,6 +7,7 @@ import {
     Plus,
     Sparkles
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 import { StatsGrid, RecentActivity } from "@/components/dashboard/dashboard-widgets";

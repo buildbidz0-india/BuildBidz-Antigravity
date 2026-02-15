@@ -13,6 +13,44 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     }
 }
 
+/**
+ * Retry fetch with exponential backoff.
+ * Retries on network errors or 5xx/429 status codes.
+ */
+async function fetchWithRetry(
+    url: string,
+    options: RequestInit = {},
+    maxRetries: number = 3,
+    baseDelay: number = 1000
+): Promise<Response> {
+    let lastError: Error | null = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const response = await fetch(url, options);
+            
+            // Retry on 5xx or 429 (rate limit)
+            if (response.status >= 500 || response.status === 429) {
+                if (attempt < maxRetries) {
+                    const delay = baseDelay * Math.pow(2, attempt);
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                    continue;
+                }
+            }
+            
+            return response;
+        } catch (error) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            if (attempt < maxRetries) {
+                const delay = baseDelay * Math.pow(2, attempt);
+                await new Promise((resolve) => setTimeout(resolve, delay));
+            }
+        }
+    }
+    
+    throw lastError || new Error("Request failed after retries");
+}
+
 export interface ChatMessage {
     role: "user" | "assistant" | "system";
     content: string;
@@ -34,20 +72,20 @@ export interface ChatResponse {
 export const aiApi = {
     /** Multi-turn chat with optional RAG context (used by project assistant) */
     chat: async (messages: ChatMessage[], context?: string, model?: string): Promise<ChatResponse> => {
-        const response = await fetch(`${BACKEND_URL}/ai/chat`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/ai/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ messages, context, model }),
         });
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail?.message || error.detail || "Failed to chat");
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.detail?.message || error.detail || `Failed to chat (${response.status})`);
         }
         return response.json();
     },
 
     ragChat: async (query: string, context?: string, model?: string): Promise<RagChatResponse> => {
-        const response = await fetch(`${BACKEND_URL}/ai/rag-chat`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/ai/rag-chat`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -56,8 +94,8 @@ export const aiApi = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || "Failed to chat with AI");
+            const error = await response.json().catch(() => ({}));
+            throw new Error(error.detail || `Failed to chat with AI (${response.status})`);
         }
 
         return response.json();
@@ -121,24 +159,24 @@ export interface ProjectStats {
 export const projectsApi = {
     stats: async (): Promise<ProjectStats> => {
         const authHeaders = await getAuthHeaders();
-        const response = await fetch(`${BACKEND_URL}/projects/stats`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/projects/stats`, {
             headers: { ...authHeaders },
         });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Failed to load stats");
+            throw new Error(err.detail || `Failed to load stats (${response.status})`);
         }
         return response.json();
     },
 
     list: async (): Promise<ApiProject[]> => {
         const authHeaders = await getAuthHeaders();
-        const response = await fetch(`${BACKEND_URL}/projects`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/projects`, {
             headers: { "Content-Type": "application/json", ...authHeaders },
         });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Failed to list projects");
+            throw new Error(err.detail || `Failed to list projects (${response.status})`);
         }
         const data = await response.json();
         return data.projects ?? [];
@@ -227,7 +265,7 @@ export const awardsApi = {
         criteria?: AwardCriteriaInput
     ): Promise<AwardDecision> => {
         const authHeaders = await getAuthHeaders();
-        const response = await fetch(`${BACKEND_URL}/awards/compare`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/awards/compare`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders },
             body: JSON.stringify({
@@ -238,7 +276,7 @@ export const awardsApi = {
         });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Award comparison failed");
+            throw new Error(err.detail || `Award comparison failed (${response.status})`);
         }
         return response.json();
     },
@@ -300,14 +338,14 @@ export interface ForecastResult {
 export const forecastApi = {
     analyze: async (request: ForecastRequest): Promise<ForecastResult> => {
         const authHeaders = await getAuthHeaders();
-        const response = await fetch(`${BACKEND_URL}/forecast/analyze`, {
+        const response = await fetchWithRetry(`${BACKEND_URL}/forecast/analyze`, {
             method: "POST",
             headers: { "Content-Type": "application/json", ...authHeaders },
             body: JSON.stringify(request),
         });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
-            throw new Error(err.detail || "Forecast failed");
+            throw new Error(err.detail || `Forecast failed (${response.status})`);
         }
         return response.json();
     },

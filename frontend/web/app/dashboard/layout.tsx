@@ -2,6 +2,7 @@
 
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/lib/auth/auth-context";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function DashboardLayout({
     children,
@@ -10,9 +11,11 @@ export default function DashboardLayout({
 }) {
     return (
         <ProtectedRoute>
-            <AppShell>
-                {children}
-            </AppShell>
+            <ErrorBoundary>
+                <AppShell>
+                    {children}
+                </AppShell>
+            </ErrorBoundary>
         </ProtectedRoute>
     );
 }
