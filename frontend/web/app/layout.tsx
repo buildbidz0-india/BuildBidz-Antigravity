@@ -7,8 +7,8 @@ import { Toaster } from "react-hot-toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "BuildBidz - Admin Dashboard",
-  description: "India-First Construction Platform Admin Dashboard",
+  title: { default: "BuildBidz", template: "%s | BuildBidz" },
+  description: "India-First Construction Platform — projects, bids, and teams.",
 };
 
 export default function RootLayout({

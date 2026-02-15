@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     Construction,
@@ -8,14 +9,13 @@ import {
     Clock,
     AlertCircle,
     FileText,
-    MessageSquare,
     Brain
 } from "lucide-react";
 import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
-import { projectsApi, type ProjectStats } from "@/lib/api";
+import { projectsApi, type ProjectStats, type ApiProject } from "@/lib/api";
 
 const statConfig = [
     { label: "Active Projects", key: "active" as const, icon: Construction, trend: "From projects", color: "text-blue-600", bg: "bg-blue-50" },
@@ -24,20 +24,34 @@ const statConfig = [
     { label: "Alerts", value: "—", icon: AlertCircle, trend: "Requires attention", color: "text-red-600", bg: "bg-red-50" },
 ];
 
-const recentActivity = [
-    { id: 1, type: "bid", text: "New bid received for Mumbai Metro Extension", time: "2 hours ago", icon: FileText },
-    { id: 2, type: "message", text: "New comment on DLF Cyber City project drawings", time: "4 hours ago", icon: MessageSquare },
-    { id: 3, type: "project", text: "Project 'Green Valley' moved to construction phase", time: "1 day ago", icon: Construction },
-];
+function relativeTime(isoDate: string | null | undefined): string {
+    if (!isoDate) return "Recently";
+    const d = new Date(isoDate);
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+    return d.toLocaleDateString();
+}
 
 export default function DashboardPage() {
     const [copilotOpen, setCopilotOpen] = useState(false);
     const [createProjectOpen, setCreateProjectOpen] = useState(false);
     const [stats, setStats] = useState<ProjectStats | null>(null);
+    const [recentProjects, setRecentProjects] = useState<ApiProject[]>([]);
 
     useEffect(() => {
         projectsApi.stats().then(setStats).catch(() => setStats(null));
-    }, [createProjectOpen]); // refetch after creating a project
+    }, [createProjectOpen]);
+
+    useEffect(() => {
+        projectsApi.list().then((list) => setRecentProjects(list.slice(0, 5))).catch(() => setRecentProjects([]));
+    }, [createProjectOpen]);
 
     const getStatValue = (item: (typeof statConfig)[0]): string => {
         if ("value" in item && item.value != null) return item.value;
@@ -109,21 +123,35 @@ export default function DashboardPage() {
                             <div className="flex items-center text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-semibold">
                                 <Brain size={14} className="mr-1" /> AI Prioritized
                             </div>
-                            <button className="text-orange-600 text-sm font-medium hover:underline">View all</button>
+                            <Link href="/dashboard/projects" className="text-orange-600 text-sm font-medium hover:underline">View all</Link>
                         </div>
                     </div>
                     <div className="divide-y divide-gray-50">
-                        {recentActivity.map((activity) => (
-                            <div key={activity.id} className="p-6 flex items-start space-x-4">
-                                <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400">
-                                    <activity.icon size={20} />
-                                </div>
-                                <div className="flex-1">
-                                    <p className="text-gray-900 font-medium">{activity.text}</p>
-                                    <p className="text-sm text-gray-500 mt-1">{activity.time}</p>
-                                </div>
+                        {recentProjects.length === 0 ? (
+                            <div className="p-6 text-center text-gray-500 text-sm">
+                                No recent projects. Create one to see activity here.
                             </div>
-                        ))}
+                        ) : (
+                            recentProjects.map((project) => (
+                                <Link
+                                    key={project.id}
+                                    href={`/dashboard/projects/${project.id}`}
+                                    className="block p-6 flex items-start space-x-4 hover:bg-gray-50/50 transition-colors"
+                                >
+                                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 flex-shrink-0">
+                                        <Construction size={20} />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-gray-900 font-medium truncate">
+                                            {project.name}
+                                        </p>
+                                        <p className="text-sm text-gray-500 mt-1">
+                                            {relativeTime(project.created_at)} · {project.status}
+                                        </p>
+                                    </div>
+                                </Link>
+                            ))
+                        )}
                     </div>
                 </div>
 

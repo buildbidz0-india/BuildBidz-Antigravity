@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
@@ -10,8 +11,20 @@ export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const { signIn } = useAuth();
+    const { signIn, user, isLoading: authLoading } = useAuth();
     const router = useRouter();
+
+    useEffect(() => {
+        if (!authLoading && user) router.replace("/dashboard");
+    }, [user, authLoading, router]);
+
+    if (authLoading || user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600" />
+            </div>
+        );
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -98,10 +111,19 @@ export default function LoginPage() {
                                     Signing in...
                                 </span>
                             ) : (
-                                "Sign In"
+                                    "Sign In"
                             )}
                         </button>
                     </div>
+                    <p className="text-center text-sm text-gray-600">
+                        Don&apos;t have an account?{" "}
+                        <Link href="/signup" className="font-medium text-orange-600 hover:text-orange-700">
+                            Sign up
+                        </Link>
+                    </p>
+                    <p className="text-center text-sm text-gray-500">
+                        <Link href="/" className="text-orange-600 hover:underline">← Back to home</Link>
+                    </p>
                 </form>
             </motion.div>
         </div>

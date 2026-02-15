@@ -66,7 +66,8 @@ export default function ProjectDetailPage() {
             return;
         }
         try {
-            const apiProject = await projectsApi.getById(id);
+            const idStr = typeof id === "string" ? id : id?.[0] ?? "";
+            const apiProject = await projectsApi.getById(idStr);
             if (apiProject) {
                 setProjectData(toDetailShape({
                     ...apiProject,
@@ -109,7 +110,8 @@ export default function ProjectDetailPage() {
                 role: teamForm.role.trim() || "Member",
                 initials: initialsFromName(teamForm.name),
             };
-            await projectsApi.update(id, { team: [...projectData.team, newMember] });
+            const projectId = typeof id === "string" ? id : id?.[0] ?? "";
+            await projectsApi.update(projectId, { team: [...projectData.team, newMember] });
             setTeamForm({ name: "", role: "" });
             setShowAddTeam(false);
             await fetchProject();
@@ -128,7 +130,8 @@ export default function ProjectDetailPage() {
                 date: milestoneForm.date || "TBD",
                 completed: milestoneForm.completed,
             };
-            await projectsApi.update(id, { milestones: [...projectData.milestones, newMilestone] });
+            const projectId = typeof id === "string" ? id : id?.[0] ?? "";
+            await projectsApi.update(projectId, { milestones: [...projectData.milestones, newMilestone] });
             setMilestoneForm({ name: "", date: "", completed: false });
             setShowAddMilestone(false);
             await fetchProject();

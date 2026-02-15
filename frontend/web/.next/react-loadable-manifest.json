@@ -1,0 +1,11 @@
+{
+  "lib\\api.ts -> @/lib/firebase/config": {
+    "id": 54257,
+    "files": [
+      "static/chunks/bc9e92e6-abc0fe18cb1308e7.js",
+      "static/chunks/7c86ec74-7f7c96fb0ff640f2.js",
+      "static/chunks/933-4b5d0e331868d4a5.js",
+      "static/chunks/257.8b878974398a3b47.js"
+    ]
+  }
+}

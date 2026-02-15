@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
@@ -26,6 +26,18 @@ export default function ProjectsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("");
     const [filterOpen, setFilterOpen] = useState(false);
+    const filterRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!filterOpen) return;
+        const handleClickOutside = (e: MouseEvent) => {
+            if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+                setFilterOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [filterOpen]);
 
     const fetchProjects = useCallback(async () => {
         setLoading(true);
@@ -87,7 +99,7 @@ export default function ProjectsPage() {
                         placeholder="Search projects by name or location..."
                     />
                 </div>
-                <div className="relative">
+                <div className="relative" ref={filterRef}>
                     <button
                         type="button"
                         onClick={() => setFilterOpen((o) => !o)}

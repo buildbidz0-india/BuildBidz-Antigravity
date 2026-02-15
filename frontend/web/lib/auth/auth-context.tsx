@@ -13,6 +13,7 @@ import {
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/lib/firebase/config";
+import { isPublicPath, isProtectedPath } from "@/lib/auth/routes";
 import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
@@ -66,11 +67,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return () => unsubscribe();
     }, [router]);
 
-    // Redirect to login only when on a protected route (e.g. /dashboard) and not signed in
+    // Redirect to login only when on a protected route and not signed in. Never redirect on public routes (/, /login, /signup, /docs).
     useEffect(() => {
         if (isLoading || user) return;
-        const isProtectedRoute = pathname?.startsWith("/dashboard");
-        if (isProtectedRoute) {
+        if (isPublicPath(pathname)) return;
+        if (isProtectedPath(pathname)) {
             router.push("/login");
         }
     }, [user, isLoading, pathname, router]);
@@ -179,12 +180,14 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, fallback }: ProtectedRouteProps) {
     const { user, isLoading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            router.push("/login");
-        }
-    }, [user, isLoading, router]);
+        if (isLoading) return;
+        if (user) return;
+        if (isPublicPath(pathname)) return;
+        router.push("/login");
+    }, [user, isLoading, pathname, router]);
 
     if (isLoading) {
         return (
