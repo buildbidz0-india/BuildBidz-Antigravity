@@ -95,14 +95,32 @@ export default function PriceTrendChart() {
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full">
-            <div className="mb-6 flex justify-between items-start">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h3 className="text-lg font-bold text-gray-900">Steel Price Forecast (TMT)</h3>
-                    <p className="text-sm text-gray-500">
-                        {forecast?.region ?? "Delhi NCR"} · AI trend & lock recommendation
-                    </p>
+                    <h3 className="text-lg font-bold text-gray-900">Price Forecast</h3>
+                    <p className="text-sm text-gray-500">AI trend & lock recommendation</p>
                 </div>
-                {forecast && lockBadge}
+                <div className="flex flex-wrap items-center gap-2">
+                    <select
+                        value={material}
+                        onChange={(e) => setMaterial(e.target.value as ForecastMaterial)}
+                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-1 focus:ring-orange-500"
+                    >
+                        {MATERIALS.map((m) => (
+                            <option key={m.value} value={m.value}>{m.label}</option>
+                        ))}
+                    </select>
+                    <select
+                        value={region}
+                        onChange={(e) => setRegion(e.target.value as ForecastRegion)}
+                        className="text-sm border border-gray-200 rounded-lg px-3 py-1.5 bg-white focus:ring-1 focus:ring-orange-500"
+                    >
+                        {REGIONS.map((r) => (
+                            <option key={r.value} value={r.value}>{r.label}</option>
+                        ))}
+                    </select>
+                    {forecast && lockBadge}
+                </div>
             </div>
             <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
