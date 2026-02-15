@@ -1,51 +1,29 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-    Construction,
-    TrendingUp,
-    Clock,
-    AlertCircle,
-    FileText,
-    Brain
+    Brain,
+    Plus,
+    Sparkles
 } from "lucide-react";
 import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
+import { StatsGrid, RecentActivity } from "@/components/dashboard/dashboard-widgets";
 import AIChat from "@/components/AIChat";
 import CreateProjectModal from "@/components/CreateProjectModal";
 import SendNotificationModal from "@/components/SendNotificationModal";
 import { projectsApi, awardsApi, type ProjectStats, type ApiProject, type AwardDecision, type AwardBid } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
+// Mock Data for charts
 const SAMPLE_BIDS: AwardBid[] = [
     { id: "b1", supplier_name: "Larsen & Toubro", price: 1480000, delivery_days: 21, reputation_score: 9.2 },
     { id: "b2", supplier_name: "Tata Projects", price: 1520000, delivery_days: 18, reputation_score: 8.8 },
     { id: "b3", supplier_name: "NCC Ltd", price: 1420000, delivery_days: 28, reputation_score: 7.5 },
     { id: "b4", supplier_name: "Shapoorji", price: 1550000, delivery_days: 20, reputation_score: 8.5 },
 ];
-
-const statConfig = [
-    { label: "Active Projects", key: "active" as const, icon: Construction, trend: "From projects", color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Total Projects", key: "total" as const, icon: TrendingUp, trend: "All projects", color: "text-green-600", bg: "bg-green-50" },
-    { label: "Planning", key: "planning" as const, icon: Clock, trend: "In planning", color: "text-orange-600", bg: "bg-orange-50" },
-    { label: "Alerts", value: "—", icon: AlertCircle, trend: "Requires attention", color: "text-red-600", bg: "bg-red-50" },
-];
-
-function relativeTime(isoDate: string | null | undefined): string {
-    if (!isoDate) return "Recently";
-    const d = new Date(isoDate);
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMins < 1) return "Just now";
-    if (diffMins < 60) return `${diffMins} min ago`;
-    if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-    if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-    return d.toLocaleDateString();
-}
 
 export default function DashboardPage() {
     const [copilotOpen, setCopilotOpen] = useState(false);
@@ -78,172 +56,93 @@ export default function DashboardPage() {
             .finally(() => setAwardLoading(false));
     }, []);
 
-    const getStatValue = (item: (typeof statConfig)[0]): string => {
-        if ("value" in item && item.value != null) return item.value;
-        if (stats && "key" in item && item.key) return String(stats[item.key] ?? "0");
-        return "—";
-    };
-
     return (
         <div className="space-y-8">
-            <div className="flex items-end justify-between">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-gray-900">Dashboard Overview</h2>
-                    <p className="text-gray-500 mt-1">Welcome back, here&apos;s what&apos;s happening today.</p>
+                    <h2 className="text-3xl font-bold font-heading text-foreground tracking-tight">Dashboard Overview</h2>
+                    <p className="text-muted-foreground mt-1">Welcome back. Here's your construction portfolio status today.</p>
                 </div>
-                <button
+                <Button
                     onClick={() => setCreateProjectOpen(true)}
-                    className="bg-orange-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200"
+                    size="lg"
+                    className="shadow-lg shadow-primary/20"
                 >
+                    <Plus className="mr-2 h-5 w-5" />
                     New Project
-                </button>
+                </Button>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {statsLoading ? (
-                    statConfig.map((stat, index) => (
-                        <motion.div
-                            key={stat.label}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
-                        >
-                            <div className={`w-12 h-12 ${stat.bg} rounded-xl mb-4 animate-pulse bg-gray-200`} />
-                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
-                            <div className="flex items-baseline space-x-2 mt-1">
-                                <span className="h-8 w-12 bg-gray-200 rounded animate-pulse inline-block" />
-                                <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
-                            </div>
-                        </motion.div>
-                    ))
-                ) : (
-                    statConfig.map((stat, index) => (
-                        <motion.div
-                            key={stat.label}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                            className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm"
-                        >
-                            <div className={`w-12 h-12 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center mb-4 text-2xl`}>
-                                <stat.icon size={24} />
-                            </div>
-                            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{stat.label}</p>
-                            <div className="flex items-baseline space-x-2 mt-1">
-                                <h3 className="text-3xl font-bold text-gray-900">{getStatValue(stat)}</h3>
-                                <span className="text-xs font-medium text-gray-400">{stat.trend}</span>
-                            </div>
-                        </motion.div>
-                    ))
-                )}
-            </div>
+            <StatsGrid stats={stats} loading={statsLoading} />
 
-            {/* AI Insights Section */}
+            {/* AI Insights & Charts */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 }}
+                    transition={{ delay: 0.2 }}
+                    className="h-[500px]"
                 >
                     <BidScoringChart decision={awardDecision} loading={awardLoading} />
                 </motion.div>
                 <motion.div
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
+                    transition={{ delay: 0.3 }}
+                    className="h-[500px]"
                 >
                     <PriceTrendChart />
                 </motion.div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Recent Activity */}
-                <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-gray-900">Recent Activity</h3>
-                        <div className="flex items-center space-x-2">
-                            <div className="flex items-center text-xs text-orange-600 bg-orange-50 px-2 py-1 rounded-full font-semibold">
-                                <Brain size={14} className="mr-1" /> AI Prioritized
-                            </div>
-                            <Link href="/dashboard/projects" className="text-orange-600 text-sm font-medium hover:underline">View all</Link>
-                        </div>
-                    </div>
-                    <div className="divide-y divide-gray-50">
-                        {recentLoading ? (
-                            [...Array(4)].map((_, i) => (
-                                <div key={i} className="p-6 flex items-start space-x-4">
-                                    <div className="w-10 h-10 bg-gray-200 rounded-lg animate-pulse flex-shrink-0" />
-                                    <div className="flex-1 min-w-0 space-y-2">
-                                        <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                                        <div className="h-3 w-1/2 bg-gray-100 rounded animate-pulse" />
-                                    </div>
-                                </div>
-                            ))
-                        ) : recentProjects.length === 0 ? (
-                            <div className="p-6 text-center text-gray-500 text-sm">
-                                No recent projects. Create one to see activity here.
-                            </div>
-                        ) : (
-                            recentProjects.map((project) => (
-                                <Link
-                                    key={project.id}
-                                    href={`/dashboard/projects/${project.id}`}
-                                    className="block p-6 flex items-start space-x-4 hover:bg-gray-50/50 transition-colors"
-                                >
-                                    <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center text-gray-400 flex-shrink-0">
-                                        <Construction size={20} />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-gray-900 font-medium truncate">
-                                            {project.name}
-                                        </p>
-                                        <p className="text-sm text-gray-500 mt-1">
-                                            {relativeTime(project.created_at)} · {project.status}
-                                        </p>
-                                    </div>
-                                </Link>
-                            ))
-                        )}
-                    </div>
+                {/* Recent Activity Table */}
+                <div className="lg:col-span-2">
+                    <RecentActivity projects={recentProjects} loading={recentLoading} />
                 </div>
 
-                {/* AI Assistant Quick Access */}
-                <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-8 text-white shadow-xl shadow-orange-100 relative overflow-hidden flex flex-col justify-between">
-                    <div className="relative z-10">
-                        <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center mb-4">
-                            <Brain size={24} />
+                {/* AI Copilot Card */}
+                <Card className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-none shadow-xl overflow-hidden relative">
+                    <div className="absolute top-0 right-0 p-32 bg-white/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+
+                    <CardHeader className="relative z-10 pb-2">
+                        <div className="h-12 w-12 bg-white/10 rounded-xl flex items-center justify-center mb-4 backdrop-blur-sm">
+                            <Sparkles className="h-6 w-6 text-accent" />
                         </div>
-                        <h3 className="text-xl font-bold mb-2">AI Copilot</h3>
-                        <p className="opacity-90 mb-6 text-sm leading-relaxed">
-                            I can help you analyze bids, forecast material trends, or draft contractor notifications.
-                        </p>
-                    </div>
-                    <div className="relative z-10 space-y-3">
-                        <button
+                        <CardTitle className="text-xl">AI Copilot</CardTitle>
+                        <CardDescription className="text-primary-foreground/70">
+                            Your intelligent assistant for construction management.
+                        </CardDescription>
+                    </CardHeader>
+
+                    <CardContent className="relative z-10 space-y-4 mt-4">
+                        <Button
+                            variant="secondary"
+                            className="w-full justify-start h-auto py-3 px-4 bg-white/10 hover:bg-white/20 text-white border-0"
                             onClick={() => setCopilotOpen(true)}
-                            className="w-full bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-md text-sm"
                         >
-                            Ask Copilot
-                        </button>
-                        <button
-                            onClick={() => setCopilotOpen(true)}
-                            className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm"
-                        >
-                            Analyze Market
-                        </button>
-                        <button
+                            <Brain className="mr-3 h-5 w-5 text-accent" />
+                            <div className="flex flex-col items-start text-left">
+                                <span className="font-semibold">Ask Copilot</span>
+                                <span className="text-xs opacity-70 font-normal">Analyze bids or get recommendations</span>
+                            </div>
+                        </Button>
+
+                        <Button
+                            variant="secondary"
+                            className="w-full justify-start h-auto py-3 px-4 bg-white/10 hover:bg-white/20 text-white border-0"
                             onClick={() => setNotificationOpen(true)}
-                            className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm"
                         >
-                            Send notification
-                        </button>
-                    </div>
-                    <div className="absolute -bottom-4 -right-4 opacity-10">
-                        <Construction size={160} />
-                    </div>
-                </div>
+                            <div className="h-5 w-5 rounded-full border-2 border-accent mr-3" />
+                            <div className="flex flex-col items-start text-left">
+                                <span className="font-semibold">Send Notifications</span>
+                                <span className="text-xs opacity-70 font-normal">Draft emails to contractors</span>
+                            </div>
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
 
             <AIChat
