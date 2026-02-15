@@ -538,5 +538,18 @@ export const bidsApi = {
             throw new Error(err.detail || "Failed to submit bid");
         }
         return response.json();
+    },
+
+    analyze: async (tenderId: number): Promise<AwardDecision> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetchWithRetry(`${BACKEND_URL}/bids/${tenderId}/analyze`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || `Analysis failed (${response.status})`);
+        }
+        return response.json();
     }
 };
