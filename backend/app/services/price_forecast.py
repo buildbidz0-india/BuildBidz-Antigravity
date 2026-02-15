@@ -105,7 +105,9 @@ class PriceForecastService:
             
         # 3. AI Analysis (DeepSeek-R1 70B via Router)
         
-        history_summary = "\n".join([f"{p.date}: {p.price}" for p in history[-7:]]) # Last 7 days
+        # Take last 7 days for summary
+        recent_history = history[-7:] if len(history) >= 7 else history
+        history_summary = "\n".join([f"{p.date}: {p.price}" for p in recent_history])
         
         prompt_content = f"""
         Role: Quantitative Supply Chain Analyst for BuildBidz.

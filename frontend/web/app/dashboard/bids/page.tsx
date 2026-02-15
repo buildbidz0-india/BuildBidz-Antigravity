@@ -1,7 +1,6 @@
-// This is a dummy replacement to force a read. I will cancel this tool call and read the file.
-// Actually I can't cancel. I will just do a no-op or read it in the next step. 
-// I'll read the file first.
+"use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Gavel, Search, Filter, Scale, Plus, FileText, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -1,6 +1,11 @@
-
 import asyncio
+import os
+import sys
 import structlog
+
+# Add the parent directory to sys.path to resolve 'app' module
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from app.db.tenders_repo import tenders_repo
 from app.api.v1.endpoints.bids import analyze_tender
 

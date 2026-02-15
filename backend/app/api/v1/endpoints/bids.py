@@ -133,14 +133,14 @@ async def analyze_tender(tender_id: int):
 
         # Map DB bids to Engine Bids
         # TODO: Add delivery_days and reputation to DB schema
-        engine_bids = []
-        for b in db_bids:
+        engine_bids: List[EngineBid] = []
+        for b in list(db_bids):
             engine_bids.append(EngineBid(
                 id=str(b["id"]),
                 supplier_name=b["contractor_name"],
                 price=float(b["amount"]),
                 delivery_days=random.randint(3, 14), # Simulated for now
-                reputation_score=round(random.uniform(3.5, 5.0), 1), # Simulated
+                reputation_score=round(float(random.uniform(3.5, 5.0)), 1), # Simulated
                 is_verified=True
             ))
 
