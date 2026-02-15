@@ -458,24 +458,24 @@ export const transcribeApi = {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.detail || "Transcription failed");
         }
-        return response.json();
     },
+};
 
-    // -----------------------------------------------------------------------------
-    // Bids API (Tender Management)
-    // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Bids API (Tender Management)
+// -----------------------------------------------------------------------------
 
-    export interface ApiTender {
-        id: number;
-title: string;
-project_id ?: number;
-description: string;
-status: string;
-deadline ?: string;
-min_budget: number;
-max_budget: number;
-bid_count: number;
-created_at ?: string;
+export interface ApiTender {
+    id: number;
+    title: string;
+    project_id?: number;
+    description: string;
+    status: string;
+    deadline?: string;
+    min_budget: number;
+    max_budget: number;
+    bid_count: number;
+    created_at?: string;
 }
 
 export interface ApiBid {

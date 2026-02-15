@@ -15,11 +15,18 @@ class MarketDataService:
         # In a real app, this would be injected via dependency injection or config
         # e.g., if settings.USE_REAL_DATA: self.source = APIDataSource()
         self.source: PriceDataSource = SimulatedDataSource()
+        self._cache: Dict[str, Any] = {}
 
     def get_price_history(self, material: str, region: str, days: int = 30) -> Dict[str, Any]:
         """
         Generates deterministic price history based on material and region.
         """
+        from datetime import date
+        cache_key = f"{material}:{region}:{days}:{date.today()}"
+        
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+
         try:
             history = self.source.get_price_history(material, region, days)
         except Exception as e:
@@ -57,12 +64,15 @@ class MarketDataService:
         if change_7d > 0.02: trend_dir = "UP"
         elif change_7d < -0.02: trend_dir = "DOWN"
 
-        return {
+        result = {
             "current_price": current_final_price,
             "history": history,
             "unit": unit,
             "trend": trend_dir,
             "change_7d_percent": round(change_7d * 100, 2)
         }
+        
+        self._cache[cache_key] = result
+        return result
 
 market_data_service = MarketDataService()
