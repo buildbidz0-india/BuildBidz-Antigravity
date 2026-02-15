@@ -79,7 +79,7 @@ export default function ExtractPage() {
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                         placeholder="Paste invoice or receipt text here..."
                     />
-                    <div className="mt-3 flex gap-2">
+                    <div className="mt-3 flex flex-wrap gap-2">
                         <button
                             type="button"
                             onClick={handleExtract}
@@ -89,6 +89,16 @@ export default function ExtractPage() {
                             {loading ? <Loader2 size={18} className="animate-spin" /> : <FileText size={18} />}
                             Extract
                         </button>
+                        <label className="flex items-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                            <Upload size={18} />
+                            Upload text file
+                            <input
+                                type="file"
+                                accept=".txt,.csv,.json,text/*"
+                                className="hidden"
+                                onChange={handleFileUpload}
+                            />
+                        </label>
                         <button
                             type="button"
                             onClick={loadSample}

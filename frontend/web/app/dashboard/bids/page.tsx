@@ -1,7 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Gavel, Search, Filter, FileText, Calendar, DollarSign } from "lucide-react";
+import Link from "next/link";
+import { Gavel, Search, Filter, Scale } from "lucide-react";
 
 export default function BidsPage() {
     return (
@@ -11,10 +12,19 @@ export default function BidsPage() {
                     <h2 className="text-3xl font-bold text-gray-900">Bids</h2>
                     <p className="text-gray-500 mt-1">View and manage construction bids and tenders.</p>
                 </div>
-                <button className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center justify-center">
-                    <Gavel size={20} className="mr-2" />
-                    New Tender
-                </button>
+                <div className="flex items-center gap-2">
+                    <Link
+                        href="/dashboard/compare"
+                        className="flex items-center justify-center gap-2 bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100"
+                    >
+                        <Scale size={20} className="mr-2" />
+                        Compare bids with AI
+                    </Link>
+                    <button className="flex items-center justify-center gap-2 px-5 py-2.5 border border-gray-200 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all">
+                        <Gavel size={20} className="mr-2" />
+                        New Tender
+                    </button>
+                </div>
             </div>
 
             <div className="flex flex-col md:flex-row gap-4">
@@ -43,9 +53,15 @@ export default function BidsPage() {
                     <Gavel size={32} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Bids management</h3>
-                <p className="text-gray-500 max-w-md mx-auto">
+                <p className="text-gray-500 max-w-md mx-auto mb-6">
                     Tenders and bid comparison will appear here once the bids API is connected. You can create new tenders and track contractor responses.
                 </p>
+                <Link
+                    href="/dashboard/compare"
+                    className="inline-flex items-center gap-2 text-orange-600 font-semibold hover:text-orange-700"
+                >
+                    <Scale size={18} /> Compare bids with AI
+                </Link>
             </motion.div>
         </div>
     );
