@@ -144,6 +144,22 @@ async def get_current_user_optional(
         return None
 
 
+async def get_firebase_payload_optional(
+    request: Request,
+    token: Optional[str] = Depends(oauth2_scheme),
+    authorization: Optional[str] = Header(None),
+) -> Optional[TokenPayload]:
+    """
+    Verify Firebase ID token when present; return payload or None.
+    Does not require a users table. Invalid token when sent returns 401.
+    """
+    if not token and authorization and authorization.startswith("Bearer "):
+        token = authorization[7:]
+    if not token:
+        return None
+    return verify_token(token)  # raises 401 if token invalid
+
+
 async def get_org_id(
     x_org_id: Optional[str] = Header(None, alias="X-Org-Id"),
     current_user: CurrentUser = Depends(get_current_user),

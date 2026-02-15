@@ -1,5 +1,17 @@
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
+/** Get Authorization header from Firebase ID token when user is signed in. */
+async function getAuthHeaders(): Promise<Record<string, string>> {
+    if (typeof window === "undefined") return {};
+    try {
+        const { auth } = await import("@/lib/firebase/config");
+        const token = await auth.currentUser?.getIdToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+    } catch {
+        return {};
+    }
+}
+
 export interface ChatMessage {
     role: "user" | "assistant" | "system";
     content: string;
@@ -72,6 +84,18 @@ export const aiApi = {
 // Projects API
 // -----------------------------------------------------------------------------
 
+export interface ApiProjectTeamMember {
+    name: string;
+    role: string;
+    initials: string;
+}
+
+export interface ApiProjectMilestone {
+    name: string;
+    date: string;
+    completed: boolean;
+}
+
 export interface ApiProject {
     id: number;
     name: string;
@@ -82,12 +106,17 @@ export interface ApiProject {
     team_count?: number | null;
     deadline?: string | null;
     image?: string | null;
+    team?: ApiProjectTeamMember[];
+    milestones?: ApiProjectMilestone[];
     created_at?: string | null;
 }
 
 export const projectsApi = {
     list: async (): Promise<ApiProject[]> => {
-        const response = await fetch(`${BACKEND_URL}/projects`);
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/projects`, {
+            headers: { "Content-Type": "application/json", ...authHeaders },
+        });
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.detail || "Failed to list projects");
@@ -97,9 +126,10 @@ export const projectsApi = {
     },
 
     create: async (body: { name: string; location?: string; description?: string }): Promise<ApiProject> => {
+        const authHeaders = await getAuthHeaders();
         const response = await fetch(`${BACKEND_URL}/projects`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...authHeaders },
             body: JSON.stringify(body),
         });
         if (!response.ok) {
@@ -110,11 +140,31 @@ export const projectsApi = {
     },
 
     getById: async (id: number | string): Promise<ApiProject | null> => {
-        const response = await fetch(`${BACKEND_URL}/projects/${id}`);
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/projects/${id}`, {
+            headers: { ...authHeaders },
+        });
         if (response.status === 404) return null;
         if (!response.ok) {
             const err = await response.json().catch(() => ({}));
             throw new Error(err.detail || "Failed to load project");
+        }
+        return response.json();
+    },
+
+    update: async (
+        id: number | string,
+        body: Partial<{ name: string; location: string; status: string; description: string; progress: number; team: ApiProjectTeamMember[]; milestones: ApiProjectMilestone[] }>
+    ): Promise<ApiProject> => {
+        const authHeaders = await getAuthHeaders();
+        const response = await fetch(`${BACKEND_URL}/projects/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", ...authHeaders },
+            body: JSON.stringify(body),
+        });
+        if (!response.ok) {
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.detail || "Failed to update project");
         }
         return response.json();
     },

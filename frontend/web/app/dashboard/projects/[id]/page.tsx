@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import AIChat from "@/components/AIChat";
 import IngestPanel from "@/components/IngestPanel";
@@ -35,46 +35,107 @@ function toDetailShape(p: { id: number; name: string; location: string; status: 
     };
 }
 
+function initialsFromName(name: string): string {
+    return name
+        .trim()
+        .split(/\s+/)
+        .map((w) => w[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase() || "?";
+}
+
 export default function ProjectDetailPage() {
     const { id } = useParams();
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("Updates");
     const [projectData, setProjectData] = useState<ProjectDetail | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showAddTeam, setShowAddTeam] = useState(false);
+    const [showAddMilestone, setShowAddMilestone] = useState(false);
+    const [teamForm, setTeamForm] = useState({ name: "", role: "" });
+    const [milestoneForm, setMilestoneForm] = useState({ name: "", date: "", completed: false });
+    const [updating, setUpdating] = useState(false);
+
+    const fetchProject = useCallback(async () => {
+        if (!id) return;
+        const numId = typeof id === "string" ? parseInt(id, 10) : NaN;
+        if (Number.isNaN(numId)) {
+            const mock = getProjectById(id);
+            setProjectData(mock ? toDetailShape(mock) : null);
+            return;
+        }
+        try {
+            const apiProject = await projectsApi.getById(id);
+            if (apiProject) {
+                setProjectData(toDetailShape({
+                    ...apiProject,
+                    team: apiProject.team ?? [],
+                    milestones: apiProject.milestones ?? [],
+                }));
+            } else {
+                const mock = getProjectById(id);
+                setProjectData(mock ? toDetailShape(mock) : null);
+            }
+        } catch {
+            const mock = getProjectById(id);
+            setProjectData(mock ? toDetailShape(mock) : null);
+        }
+    }, [id]);
 
     useEffect(() => {
         let cancelled = false;
-        const numId = typeof id === "string" ? parseInt(id, 10) : NaN;
-        if (!id || Number.isNaN(numId)) {
+        setLoading(true);
+        if (!id) {
             const mock = getProjectById(id);
             setProjectData(mock ? toDetailShape(mock) : null);
             setLoading(false);
-            return;
+            return () => { cancelled = true; };
         }
         (async () => {
-            try {
-                const apiProject = await projectsApi.getById(id);
-                if (cancelled) return;
-                if (apiProject) {
-                    setProjectData(toDetailShape({
-                        ...apiProject,
-                        team: [],
-                        milestones: [],
-                    }));
-                } else {
-                    const mock = getProjectById(id);
-                    setProjectData(mock ? toDetailShape(mock) : null);
-                }
-            } catch {
-                if (cancelled) return;
-                const mock = getProjectById(id);
-                setProjectData(mock ? toDetailShape(mock) : null);
-            } finally {
-                if (!cancelled) setLoading(false);
-            }
+            await fetchProject();
+            if (!cancelled) setLoading(false);
         })();
         return () => { cancelled = true; };
-    }, [id]);
+    }, [id, fetchProject]);
+
+    const handleAddTeamMember = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!projectData || !id || !teamForm.name.trim()) return;
+        setUpdating(true);
+        try {
+            const newMember = {
+                name: teamForm.name.trim(),
+                role: teamForm.role.trim() || "Member",
+                initials: initialsFromName(teamForm.name),
+            };
+            await projectsApi.update(id, { team: [...projectData.team, newMember] });
+            setTeamForm({ name: "", role: "" });
+            setShowAddTeam(false);
+            await fetchProject();
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleAddMilestone = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!projectData || !id || !milestoneForm.name.trim()) return;
+        setUpdating(true);
+        try {
+            const newMilestone = {
+                name: milestoneForm.name.trim(),
+                date: milestoneForm.date || "TBD",
+                completed: milestoneForm.completed,
+            };
+            await projectsApi.update(id, { milestones: [...projectData.milestones, newMilestone] });
+            setMilestoneForm({ name: "", date: "", completed: false });
+            setShowAddMilestone(false);
+            await fetchProject();
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -201,7 +262,7 @@ export default function ProjectDetailPage() {
                         <h3 className="text-lg font-bold text-gray-900 mb-6">Milestones</h3>
                         <div className="space-y-8">
                             {projectData.milestones.map((milestone, i) => (
-                                <div key={milestone.name} className="flex items-start relative">
+                                <div key={`${milestone.name}-${i}`} className="flex items-start relative">
                                     {i < projectData.milestones.length - 1 && (
                                         <div className="absolute left-[11px] top-6 bottom-[-24px] w-0.5 bg-gray-100" />
                                     )}
@@ -219,6 +280,58 @@ export default function ProjectDetailPage() {
                                 </div>
                             ))}
                         </div>
+                        {!showAddMilestone ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowAddMilestone(true)}
+                                className="w-full mt-6 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-bold rounded-xl transition-colors"
+                            >
+                                + Add milestone
+                            </button>
+                        ) : (
+                            <form onSubmit={handleAddMilestone} className="mt-6 p-4 bg-gray-50 rounded-xl space-y-3">
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Milestone name"
+                                    value={milestoneForm.name}
+                                    onChange={(e) => setMilestoneForm((f) => ({ ...f, name: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Date (e.g. Q1 2025)"
+                                    value={milestoneForm.date}
+                                    onChange={(e) => setMilestoneForm((f) => ({ ...f, date: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <label className="flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={milestoneForm.completed}
+                                        onChange={(e) => setMilestoneForm((f) => ({ ...f, completed: e.target.checked }))}
+                                        className="rounded"
+                                    />
+                                    Completed
+                                </label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddMilestone(false)}
+                                        className="flex-1 py-2 text-gray-600 text-sm font-medium rounded-lg bg-white border border-gray-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updating}
+                                        className="flex-1 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                                    >
+                                        {updating ? "Adding…" : "Add"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
 
                     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
@@ -227,8 +340,8 @@ export default function ProjectDetailPage() {
                             Project Team
                         </h3>
                         <div className="space-y-4">
-                            {projectData.team.map((member) => (
-                                <div key={member.name} className="flex items-center space-x-3">
+                            {projectData.team.map((member, i) => (
+                                <div key={`${member.name}-${i}`} className="flex items-center space-x-3">
                                     <div className="h-10 w-10 rounded-xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm">
                                         {member.initials}
                                     </div>
@@ -239,9 +352,49 @@ export default function ProjectDetailPage() {
                                 </div>
                             ))}
                         </div>
-                        <button className="w-full mt-6 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-bold rounded-xl transition-colors">
-                            Manage Team
-                        </button>
+                        {!showAddTeam ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowAddTeam(true)}
+                                className="w-full mt-6 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-bold rounded-xl transition-colors"
+                            >
+                                + Add team member
+                            </button>
+                        ) : (
+                            <form onSubmit={handleAddTeamMember} className="mt-6 p-4 bg-gray-50 rounded-xl space-y-3">
+                                <input
+                                    type="text"
+                                    required
+                                    placeholder="Full name"
+                                    value={teamForm.name}
+                                    onChange={(e) => setTeamForm((f) => ({ ...f, name: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <input
+                                    type="text"
+                                    placeholder="Role"
+                                    value={teamForm.role}
+                                    onChange={(e) => setTeamForm((f) => ({ ...f, role: e.target.value }))}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAddTeam(false)}
+                                        className="flex-1 py-2 text-gray-600 text-sm font-medium rounded-lg bg-white border border-gray-200"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updating}
+                                        className="flex-1 py-2 bg-orange-600 text-white text-sm font-medium rounded-lg hover:bg-orange-700 disabled:opacity-50"
+                                    >
+                                        {updating ? "Adding…" : "Add"}
+                                    </button>
+                                </div>
+                            </form>
+                        )}
                     </div>
                 </div>
             </div>
