@@ -192,7 +192,7 @@ export function RecentActivity({ projects, loading }: RecentActivityProps) {
                                         </p>
                                         <div className="flex items-center text-xs text-muted-foreground">
                                             <Calendar className="mr-1 h-3 w-3" />
-                                            Created {formatDate(project.created_at)}
+                                            Created {formatDate(project.created_at ?? "")}
                                         </div>
                                     </div>
                                 </div>
