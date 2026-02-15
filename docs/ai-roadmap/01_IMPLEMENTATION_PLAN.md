@@ -112,9 +112,9 @@ Where weights are configurable per project type.
 **Depends on: Phases 2–6**
 
 **Modified/New Files in `frontend/web/`:**
-- Procurement dashboard with AI-powered comparison
-- Price forecasting charts
-- Award justification display
+- [x] Procurement dashboard with AI-powered comparison (Shell built)
+- [x] Price forecasting charts (Shell built)
+- [x] Award justification display (Shell built)
 
 ---
 
