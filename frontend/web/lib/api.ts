@@ -11,7 +11,28 @@ export interface RagChatResponse {
     usage?: any;
 }
 
+export interface ChatResponse {
+    content: string;
+    model?: string;
+    usage?: unknown;
+    session_id?: string;
+}
+
 export const aiApi = {
+    /** Multi-turn chat with optional RAG context (used by project assistant) */
+    chat: async (messages: ChatMessage[], context?: string, model?: string): Promise<ChatResponse> => {
+        const response = await fetch(`${BACKEND_URL}/ai/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages, context, model }),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.detail?.message || error.detail || "Failed to chat");
+        }
+        return response.json();
+    },
+
     ragChat: async (query: string, context?: string, model?: string): Promise<RagChatResponse> => {
         const response = await fetch(`${BACKEND_URL}/ai/rag-chat`, {
             method: "POST",

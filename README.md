@@ -63,7 +63,7 @@ An end-to-end construction platform for the Indian market featuring bidding, pro
 
 5. **Python Backend**:
    ```bash
-   cd python_backend
+   cd backend
    pip install -r requirements.txt
    python -m app.main
    ```
@@ -79,13 +79,14 @@ Test the integration:
 cd backend
 python -m scripts.cli ai groq-test --prompt "How can AI help Indian construction projects?"
 ```
+(If your CLI lives under `backend/scripts/`, run from repo root: `cd backend && python -m scripts.cli ...`.)
 
 ## 📁 Project Structure
 
 ```
 buildbidz/
 ├── dataconnect/       # Firebase Data Connect (SQL Schema & GQL)
-├── python_backend/    # FastAPI Backend & ML Workers
+├── backend/           # FastAPI Backend & ML Workers
 │   ├── app/
 │   │   ├── api/       # API Routes
 │   │   ├── services/  # Domain Logic (Finance, AI, Integrations)

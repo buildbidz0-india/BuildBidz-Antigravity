@@ -11,7 +11,7 @@ import {
     useState,
     ReactNode,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/lib/firebase/config";
 import {
     onAuthStateChanged,
@@ -53,22 +53,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const [isLoading, setIsLoading] = useState(true);
     const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
-        // Listen for auth changes
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setUser(user);
+        const unsubscribe = onAuthStateChanged(auth, (authUser) => {
+            setUser(authUser);
             setIsLoading(false);
-
-            if (user) {
+            if (authUser) {
                 router.refresh();
-            } else {
-                router.push("/login");
             }
         });
-
         return () => unsubscribe();
     }, [router]);
+
+    // Redirect to login only when on a protected route (e.g. /dashboard) and not signed in
+    useEffect(() => {
+        if (isLoading || user) return;
+        const isProtectedRoute = pathname?.startsWith("/dashboard");
+        if (isProtectedRoute) {
+            router.push("/login");
+        }
+    }, [user, isLoading, pathname, router]);
 
     // Sign in with email and password
     const signIn = async (email: string, password: string) => {

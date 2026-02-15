@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import {
     Construction,
@@ -12,6 +13,8 @@ import {
 } from "lucide-react";
 import BidScoringChart from "@/components/dashboard/BidScoringChart";
 import PriceTrendChart from "@/components/dashboard/PriceTrendChart";
+import AIChat from "@/components/AIChat";
+import CreateProjectModal from "@/components/CreateProjectModal";
 
 const stats = [
     { label: "Active Projects", value: "12", icon: Construction, trend: "+2 this month", color: "text-blue-600", bg: "bg-blue-50" },
@@ -27,6 +30,9 @@ const recentActivity = [
 ];
 
 export default function DashboardPage() {
+    const [copilotOpen, setCopilotOpen] = useState(false);
+    const [createProjectOpen, setCreateProjectOpen] = useState(false);
+
     return (
         <div className="space-y-8">
             <div className="flex items-end justify-between">
@@ -34,7 +40,10 @@ export default function DashboardPage() {
                     <h2 className="text-3xl font-bold text-gray-900">Dashboard Overview</h2>
                     <p className="text-gray-500 mt-1">Welcome back, here&apos;s what&apos;s happening today.</p>
                 </div>
-                <button className="bg-orange-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200">
+                <button
+                    onClick={() => setCreateProjectOpen(true)}
+                    className="bg-orange-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-200"
+                >
                     New Project
                 </button>
             </div>
@@ -118,10 +127,16 @@ export default function DashboardPage() {
                         </p>
                     </div>
                     <div className="relative z-10 space-y-3">
-                        <button className="w-full bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-md text-sm">
+                        <button
+                            onClick={() => setCopilotOpen(true)}
+                            className="w-full bg-white text-orange-600 px-6 py-3 rounded-xl font-bold hover:bg-orange-50 transition-colors shadow-md text-sm"
+                        >
                             Ask Copilot
                         </button>
-                        <button className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm">
+                        <button
+                            onClick={() => setCopilotOpen(true)}
+                            className="w-full bg-orange-700/30 text-white border border-white/20 px-6 py-3 rounded-xl font-bold hover:bg-orange-700/50 transition-colors text-sm"
+                        >
                             Analyze Market
                         </button>
                     </div>
@@ -130,6 +145,16 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+
+            <AIChat
+                projectId="dashboard"
+                isOpen={copilotOpen}
+                onClose={() => setCopilotOpen(false)}
+            />
+            <CreateProjectModal
+                isOpen={createProjectOpen}
+                onClose={() => setCreateProjectOpen(false)}
+            />
         </div>
     );
 }

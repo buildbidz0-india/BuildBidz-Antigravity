@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import {
     Plus,
     Search,
@@ -11,41 +13,11 @@ import {
     Calendar,
     Users
 } from "lucide-react";
-
-const projects = [
-    {
-        id: 1,
-        name: "Mumbai Metro Extension",
-        location: "Mumbai, MH",
-        status: "Active",
-        team: 18,
-        deadline: "Dec 2026",
-        progress: 35,
-        image: "https://images.unsplash.com/photo-1541888946425-d81bb19480c5?auto=format&fit=crop&q=80&w=400"
-    },
-    {
-        id: 2,
-        name: "DLF Cyber City - Tower C",
-        location: "Gurgaon, HR",
-        status: "Active",
-        team: 42,
-        deadline: "Aug 2025",
-        progress: 68,
-        image: "https://images.unsplash.com/photo-1503387762-592dee58c190?auto=format&fit=crop&q=80&w=400"
-    },
-    {
-        id: 3,
-        name: "Green Valley Residential",
-        location: "Bangalore, KA",
-        status: "Planning",
-        team: 5,
-        deadline: "Mar 2027",
-        progress: 10,
-        image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=400"
-    },
-];
+import { MOCK_PROJECTS } from "@/lib/mock-projects";
+import CreateProjectModal from "@/components/CreateProjectModal";
 
 export default function ProjectsPage() {
+    const [createModalOpen, setCreateModalOpen] = useState(false);
     return (
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -53,7 +25,10 @@ export default function ProjectsPage() {
                     <h2 className="text-3xl font-bold text-gray-900">Projects</h2>
                     <p className="text-gray-500 mt-1">Manage and track all your construction projects.</p>
                 </div>
-                <button className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center justify-center">
+                <button
+                    onClick={() => setCreateModalOpen(true)}
+                    className="bg-orange-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-orange-700 transition-all shadow-lg shadow-orange-100 flex items-center justify-center"
+                >
                     <Plus size={20} className="mr-2" />
                     Create Project
                 </button>
@@ -79,9 +54,9 @@ export default function ProjectsPage() {
 
             {/* Projects Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map((project, index) => (
+                {MOCK_PROJECTS.map((project, index) => (
+                    <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
                     <motion.div
-                        key={project.id}
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.1 }}
@@ -135,13 +110,18 @@ export default function ProjectsPage() {
                                 </div>
                                 <div className="flex items-center text-xs text-gray-500">
                                     <Users size={14} className="mr-2 text-gray-400" />
-                                    {project.team} members
+                                    {project.teamCount ?? project.team.length} members
                                 </div>
                             </div>
                         </div>
                     </motion.div>
+                    </Link>
                 ))}
             </div>
+            <CreateProjectModal
+                isOpen={createModalOpen}
+                onClose={() => setCreateModalOpen(false)}
+            />
         </div>
     );
 }

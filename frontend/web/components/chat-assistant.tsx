@@ -11,6 +11,7 @@ import {
     Loader2,
     Sparkles
 } from "lucide-react";
+import { aiApi } from "@/lib/api";
 
 interface Message {
     role: "user" | "assistant";
@@ -44,25 +45,16 @@ export default function ChatAssistant({ context, projectName }: ChatAssistantPro
         setIsLoading(true);
 
         try {
-            const response = await fetch("http://localhost:8000/api/v1/ai/chat", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    messages: [...messages, userMessage],
-                    context: context,
-                }),
-            });
-
-            if (!response.ok) throw new Error("Failed to get response");
-
-            const data = await response.json();
+            const chatMessages = [...messages, userMessage].map((m) => ({
+                role: m.role as "user" | "assistant" | "system",
+                content: m.content,
+            }));
+            const data = await aiApi.chat(chatMessages, context);
             const assistantMessage: Message = {
                 role: "assistant",
-                content: data.content
+                content: data.content,
             };
-            setMessages(prev => [...prev, assistantMessage]);
+            setMessages((prev) => [...prev, assistantMessage]);
         } catch (error) {
             console.error("Chat Error:", error);
             setMessages(prev => [...prev, {
