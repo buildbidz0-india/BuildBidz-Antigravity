@@ -83,10 +83,11 @@ class PriceForecastService:
             days=30
         )
         
+        
         current_price = market_data["current_price"]
         trend = market_data["trend"]
         
-        # Convert dict items to PricePoint objects
+        # Convert MarketPrice objects to PricePoint objects
         history = [
             PricePoint(date=p.date, price=p.price, unit=p.unit) 
             for p in market_data["history"]
